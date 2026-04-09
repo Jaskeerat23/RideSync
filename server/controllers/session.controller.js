@@ -3,7 +3,7 @@ require('dotenv').config();
 
 async function create_jwt_token(payload) {
     try{
-        const res = await jwt.sign(payload, process.env.SECRET_KEY_JWT, { expiresIn: 60*60*24*7 });
+        const res = await jwt.sign(payload, process.env.SECRET_KEY_JWT, { expiresIn: 60*60*24*7*1000 });
         console.log(res);
         return res;
     }
