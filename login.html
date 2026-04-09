@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Log in — RideSync</title>
+    <meta name="description" content="Log in to RideSync (frontend demo)." />
+    <link rel="stylesheet" href="./assets/css/style.css" />
+  </head>
+  <body class="auth-body">
+    <header class="site-header">
+      <div class="container nav-wrap">
+        <a class="brand" href="index.html#home">RideSync</a>
+        <button id="menuToggle" class="menu-btn" aria-label="Toggle menu">Menu</button>
+        <nav id="mainNav" class="main-nav" aria-label="Main">
+          <div class="nav-links">
+            <a href="index.html#home">Home</a>
+            <a href="index.html#about">About</a>
+            <a href="index.html#features">Features</a>
+            <a href="index.html#sponsors">Sponsors</a>
+            <a href="index.html#contact">Contact</a>
+          </div>
+          <div class="nav-auth" aria-label="Account">
+            <a href="login.html" class="nav-login" aria-current="page">Log in</a>
+            <a href="signup.html" class="nav-signup">Sign up</a>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <main class="auth-main">
+      <div class="container auth-container">
+        <div class="auth-card">
+          <h1 class="auth-title">Log in</h1>
+          <p class="auth-hint">Connected to Jaskeerat backend auth service.</p>
+
+          <p class="auth-feedback" id="authFeedback" hidden></p>
+
+          <form class="auth-form" data-demo-auth id="loginForm">
+            <div class="form-field">
+              <label for="login-username">Username</label>
+              <input
+                id="login-username"
+                name="username"
+                type="text"
+                autocomplete="username"
+                required
+              />
+            </div>
+            <div class="form-field">
+              <label for="login-password">Password</label>
+              <input
+                id="login-password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                required
+                minlength="6"
+              />
+            </div>
+            <div class="form-row-inline">
+              <label class="checkbox-label">
+                <input type="checkbox" name="remember" />
+                Remember me
+              </label>
+              <a href="#" class="auth-link-muted">Forgot password?</a>
+            </div>
+            <button type="submit" class="cta-btn auth-submit">Log in</button>
+          </form>
+
+          <p class="auth-switch">
+            New here? <a href="signup.html">Create an account</a>
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer auth-footer">
+      <div class="container">
+        <p><a href="index.html" class="auth-back">← Back to home</a></p>
+      </div>
+    </footer>
+
+    <script src="./assets/js/script.js"></script>
+    <script src="./assets/js/auth.js"></script>
+  </body>
+</html>

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign up — RideSync</title>
+    <meta name="description" content="Join RideSync (frontend demo)." />
+    <link rel="stylesheet" href="./assets/css/style.css" />
+  </head>
+  <body class="auth-body signup-page">
+    <header class="site-header">
+      <div class="container nav-wrap">
+        <a class="brand" href="index.html#home">RideSync</a>
+        <button id="menuToggle" class="menu-btn" aria-label="Toggle menu">Menu</button>
+        <nav id="mainNav" class="main-nav" aria-label="Main">
+          <div class="nav-links">
+            <a href="index.html#home">Home</a>
+            <a href="index.html#about">About</a>
+            <a href="index.html#features">Features</a>
+            <a href="index.html#sponsors">Sponsors</a>
+            <a href="index.html#contact">Contact</a>
+          </div>
+          <div class="nav-auth" aria-label="Account">
+            <a href="login.html" class="nav-login">Log in</a>
+            <a href="signup.html" class="nav-signup" aria-current="page">Sign up</a>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <main class="auth-main">
+      <div class="container auth-container">
+        <div class="auth-card">
+          <h1 class="auth-title">Create account</h1>
+          <p class="auth-hint">Creates account using Jaskeerat backend auth API.</p>
+
+          <p class="auth-feedback" id="authFeedback" hidden></p>
+
+          <form class="auth-form" data-demo-auth id="signupForm">
+            <div class="form-field">
+              <label for="signup-username">Username</label>
+              <input
+                id="signup-username"
+                name="username"
+                type="text"
+                autocomplete="username"
+                required
+              />
+            </div>
+            <div class="form-field">
+              <label for="signup-name">Full name</label>
+              <input id="signup-name" name="name" type="text" autocomplete="name" required />
+            </div>
+            <div class="form-field">
+              <label for="signup-role">Role</label>
+              <select id="signup-role" name="role" required>
+                <option value="rider" selected>Rider</option>
+                <option value="organizer">Organizer</option>
+                <option value="sponsor">Sponsor</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="signup-email">Email</label>
+              <input id="signup-email" name="email" type="email" autocomplete="email" required />
+            </div>
+            <div class="form-field">
+              <label for="signup-password">Password</label>
+              <input
+                id="signup-password"
+                name="password"
+                type="password"
+                autocomplete="new-password"
+                required
+                minlength="6"
+              />
+            </div>
+            <div class="form-field">
+              <label for="signup-password2">Confirm password</label>
+              <input
+                id="signup-password2"
+                name="password2"
+                type="password"
+                autocomplete="new-password"
+                required
+                minlength="6"
+              />
+            </div>
+
+            <div class="role-fields" data-role-block="rider">
+              <h3 class="role-fields-title">Rider details</h3>
+              <div class="form-field">
+                <label for="rider-age">Age</label>
+                <input id="rider-age" name="riderAge" type="number" min="16" max="99" />
+              </div>
+              <div class="form-field">
+                <label for="rider-city">City</label>
+                <input id="rider-city" name="riderCity" type="text" />
+              </div>
+              <div class="form-field">
+                <label for="rider-social">Social link</label>
+                <input id="rider-social" name="riderSocial" type="text" placeholder="Instagram / WhatsApp link" />
+              </div>
+              <div class="form-field">
+                <label for="rider-bikes">Bikes (comma separated)</label>
+                <input id="rider-bikes" name="riderBikes" type="text" placeholder="Classic 350, Duke 250" />
+              </div>
+              <div class="form-field">
+                <label for="rider-style">Riding style (comma separated)</label>
+                <input id="rider-style" name="riderStyle" type="text" placeholder="Adventure, Touring" />
+              </div>
+              <div class="form-field">
+                <label for="rider-bio">Bio</label>
+                <textarea id="rider-bio" name="riderBio" rows="3"></textarea>
+              </div>
+            </div>
+
+            <div class="role-fields hidden" data-role-block="organizer">
+              <h3 class="role-fields-title">Organizer details</h3>
+              <div class="form-field">
+                <label for="org-description">Description</label>
+                <textarea id="org-description" name="orgDescription" rows="3"></textarea>
+              </div>
+              <div class="form-field">
+                <label for="org-social">Social link</label>
+                <input id="org-social" name="orgSocial" type="text" />
+              </div>
+              <div class="form-field">
+                <label for="org-website">Website</label>
+                <input id="org-website" name="orgWebsite" type="text" />
+              </div>
+              <div class="form-field">
+                <label for="org-gstin">GSTIN</label>
+                <input id="org-gstin" name="orgGstin" type="text" />
+              </div>
+            </div>
+
+            <div class="role-fields hidden" data-role-block="sponsor">
+              <h3 class="role-fields-title">Sponsor details</h3>
+              <p class="auth-note">
+                Sponsor base account is supported. Profile insert may depend on backend implementation.
+              </p>
+              <div class="form-field">
+                <label for="sponsor-brand">Brand name</label>
+                <input id="sponsor-brand" name="sponsorBrand" type="text" />
+              </div>
+              <div class="form-field">
+                <label for="sponsor-website">Website</label>
+                <input id="sponsor-website" name="sponsorWebsite" type="text" />
+              </div>
+              <div class="form-field">
+                <label for="sponsor-description">Description</label>
+                <textarea id="sponsor-description" name="sponsorDescription" rows="3"></textarea>
+              </div>
+            </div>
+            <label class="checkbox-label">
+              <input type="checkbox" name="terms" required />
+              I agree to the terms (demo checkbox)
+            </label>
+            <button type="submit" class="cta-btn auth-submit">Sign up</button>
+          </form>
+
+          <p class="auth-switch">
+            Already have an account? <a href="login.html">Log in</a>
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer auth-footer">
+      <div class="container">
+        <p><a href="index.html" class="auth-back">← Back to home</a></p>
+      </div>
+    </footer>
+
+    <script src="./assets/js/script.js"></script>
+    <script src="./assets/js/auth.js"></script>
+  </body>
+</html>
