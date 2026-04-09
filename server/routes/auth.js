@@ -16,11 +16,12 @@ router.post('/signup', async function signupservice(req, res) {
         console.log("result data from singup is ", result.data);
         const jwt = await create_jwt_token(result.data);
 
-        res.cookie('token', jwt, { maxAge: 60*60*24*7*1000 });
+        res.cookie('token', jwt, { httpOnly: true, sameSite: 'lax', secure: false, maxAge: 60*60*24*7*1000 });
 
         res.status(201).json({
             success: true,
             data: {
+                _id: result.data._id,
                 username: result.data.username,
                 email: result.data.email,
                 role: result.data.role
@@ -41,17 +42,18 @@ router.post('/login', async (req, res) => {
         const result = await login_user(req.body);
         console.log(result);
         if(!result.success) {
-            res.status(400).json({
+            return res.status(400).json({
                 success: false,
                 message: result.message
             });
         }
         else {
             const jwt = await create_jwt_token(result.data);
-            res.cookie('token', jwt, { maxAge: 60*60*24*7*1000 });
-            res.status(201).json({
+            res.cookie('token', jwt, { httpOnly: true, sameSite: 'lax', secure: false, maxAge: 60*60*24*7*1000 });
+            res.status(200).json({
                 success: true,
                 data:  {
+                    _id: result.data._id,
                     username: result.data.username,
                     email: result.data.email,
                     role: result.data.role
