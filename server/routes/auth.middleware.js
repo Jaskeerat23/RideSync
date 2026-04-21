@@ -11,7 +11,7 @@ async function authMiddleware(req, res, next) {
             });
         }
 
-        const decode = jwt.verify(token, process.env.SECRET_KEY);
+        const decode = jwt.verify(token, process.env.SECRET_KEY_JWT);
         req.user = decode;
         next();
     }
