@@ -2,7 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 const authRoutes = require('./auth.route.js');
-const dashboardRoutes = require('./dashboard.js');
+const dashboardRoutes = require('./rides.route.js');
 const cors = require('cors');
 dotenv.config();
 
