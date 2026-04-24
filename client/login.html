@@ -7,6 +7,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
   <style>
     /* ═══════════════════════════════════════════════
        DESIGN TOKENS (mirrored from signup)
@@ -287,13 +291,16 @@
       transition: border-color var(--transition),
                   box-shadow var(--transition),
                   background var(--transition);
-      text-decoration: none;
       margin-bottom: 0;
     }
-    .btn-google:hover {
+    .btn-google:hover:not(:disabled) {
       border-color: var(--gray-400);
       box-shadow: var(--shadow-sm);
       background: var(--gray-100);
+    }
+    .btn-google:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
     .google-logo {
       width: 18px; height: 18px;
@@ -563,16 +570,16 @@
 
         <div class="divider">or</div>
 
-        <!-- Google OAuth -->
-        <a href="http://localhost:3000/auth/google" class="btn-google">
+        <!-- Google Button (now a real button, not an anchor) -->
+        <button type="button" class="btn-google" id="btnGoogle">
           <svg class="google-logo" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
             <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
             <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
             <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
             <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/>
           </svg>
-          Continue with Google
-        </a>
+          <span id="googleBtnText">Continue with Google</span>
+        </button>
 
         <p class="signup-link">Don't have an account? <a href="signup.html">Sign up</a></p>
 
@@ -594,14 +601,18 @@
     (function () {
       'use strict';
 
-      const form       = document.getElementById('loginForm');
-      const btn        = document.getElementById('btnLogin');
-      const btnText    = document.getElementById('btnText');
-      const togglePw   = document.getElementById('togglePw');
-      const pwInput    = document.getElementById('password');
-      const userInput  = document.getElementById('username');
+      // ── REPLACE THIS with your actual Google Client ID ──
+      const GOOGLE_CLIENT_ID = '452037498715-75kg9drj8u18f1lhc6d97emjq91jdpec.apps.googleusercontent.com';
+
+      const form        = document.getElementById('loginForm');
+      const btn         = document.getElementById('btnLogin');
+      const togglePw    = document.getElementById('togglePw');
+      const pwInput     = document.getElementById('password');
+      const userInput   = document.getElementById('username');
       const errorBanner = document.getElementById('errorBanner');
       const errorText   = document.getElementById('errorText');
+      const btnGoogle   = document.getElementById('btnGoogle');
+      const googleBtnText = document.getElementById('googleBtnText');
 
       /* ── Toggle password visibility ── */
       togglePw.addEventListener('click', () => {
@@ -624,7 +635,6 @@
         errorBanner.classList.add('visible');
         userInput.classList.add('invalid');
         pwInput.classList.add('invalid');
-        // reset button
         btn.disabled = false;
         btn.innerHTML = `<span>Try again</span><span class="btn-arrow">→</span>`;
         btn.style.background = '#ef4444';
@@ -632,6 +642,17 @@
           btn.style.background = '';
           btn.innerHTML = `<span>Sign In</span><span class="btn-arrow">→</span>`;
         }, 2500);
+      }
+
+      /* ── Role-based redirect (shared by both login flows) ── */
+      function redirectByRole(role) {
+        if (role === 'rider') {
+          window.location.href = 'rider_dashboard.html';
+        } else if (role === 'organizer') {
+          window.location.href = 'organizer_dashboard.html';
+        } else {
+          showError('Unknown role. Contact support.');
+        }
       }
 
       /* ── Client-side validation ── */
@@ -658,12 +679,11 @@
         return true;
       }
 
-      /* ── Submit ── */
+      /* ── Regular login submit ── */
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!validate()) return;
 
-        // Loading state
         btn.disabled = true;
         btn.innerHTML = `<div class="spinner"></div><span>Signing in…</span>`;
 
@@ -676,12 +696,13 @@
           const res = await fetch('http://localhost:3000/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',           // send/receive httpOnly cookies
+            credentials: 'include',
             body: JSON.stringify(payload),
           });
 
           if (res.ok) {
-            document.getElementById('successOverlay').classList.add('visible');
+            const data = await res.json();
+            redirectByRole(data.data.role);
           } else {
             const data = await res.json().catch(() => ({}));
             showError(data.message || `Login failed (${res.status}). Please try again.`);
@@ -693,6 +714,76 @@
           btn.innerHTML = `<span>Sign In</span><span class="btn-arrow">→</span>`;
         }
       });
+
+      /* ════════════════════════════════════════════
+         GOOGLE IDENTITY SERVICES
+      ════════════════════════════════════════════ */
+
+      /* Called by GIS after user picks their Google account */
+      function handleGoogleCredential(response) {
+        const credential = response.credential; // this is the JWT token from Google
+
+        // Re-enable button in case something goes wrong
+        btnGoogle.disabled = false;
+        googleBtnText.textContent = 'Continue with Google';
+
+        // Send token to your backend
+        sendGoogleToken(credential);
+      }
+
+      async function sendGoogleToken(credential) {
+        // Show loading state on Google button
+        btnGoogle.disabled = true;
+        googleBtnText.textContent = 'Signing in…';
+
+        try {
+          const res = await fetch('http://localhost:3000/auth/google_sign_in', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',         // so your httpOnly cookie gets set
+            body: JSON.stringify({ credential }),
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            redirectByRole(data.data.role);
+          } else {
+            const data = await res.json().catch(() => ({}));
+            errorText.textContent = data.message || 'Google sign-in failed. Please try again.';
+            errorBanner.classList.add('visible');
+            btnGoogle.disabled = false;
+            googleBtnText.textContent = 'Continue with Google';
+          }
+        } catch (err) {
+          console.error('Google sign-in request failed:', err);
+          errorText.textContent = 'Could not reach the server. Check your connection.';
+          errorBanner.classList.add('visible');
+          btnGoogle.disabled = false;
+          googleBtnText.textContent = 'Continue with Google';
+        }
+      }
+
+      /* Initialize GIS once the script has loaded */
+      function initGoogleSignIn() {
+        if (typeof google === 'undefined' || !google.accounts) {
+          // Script not loaded yet, retry in 200ms
+          setTimeout(initGoogleSignIn, 200);
+          return;
+        }
+
+        google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleGoogleCredential,  // fires after user picks account
+          ux_mode: 'popup',                  // popup instead of full redirect
+        });
+
+        // Wire up your existing custom button to trigger the popup
+        btnGoogle.addEventListener('click', () => {
+          google.accounts.id.prompt();       // opens the Google account picker popup
+        });
+      }
+
+      initGoogleSignIn();
 
     })();
   </script>
