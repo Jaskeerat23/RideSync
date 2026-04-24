@@ -1,61 +1,58 @@
 const mongoose = require('mongoose');
+const rideService = require('../services/rides.service');
 const Ride = require('../models/ride.model');
 require('dotenv').config();
 
-async function connect_to_db() {
+async function get_rides(req, res) {
     try {
-        const res = await mongoose.connect(process.env.MONGODB_URI_JAS);
-        console.log("Connection Successful, fetch_rides");
-    }
-    catch(err) {
-        throw err;
-    }
-}
+        //No data required since this functions return
+        //random rides to the user on very first login
+        const result = await rideService.get_rides();
 
-async function get_org_rides(data) {
-    try {
-        const _id = data._id;
-
-        const result = await Ride.find({
-            userId: new mongoose.Schema.Types.ObjectId(_id)
-        });
-
-        return {
-            success: true,
-            data: result
-        };
-    }
-    catch(err) {
-        throw err;
-    }
-}
-
-async function get_rides() {
-    try {
-        await connect_to_db();
-        
-        const res = await Ride.aggregate([
-            { $sample: { size: 10} }
-        ]);
-
-        if(res.length === 0) {
-            return {
+        if(!result.success) {
+            return res.status(400).json({
                 success: false,
-                message: "No Rides available"
-            };
+                message: result.message
+            });
         }
-        console.log(res);
-        return {
+
+        res.status(200).json({
             success: true,
-            data: res
-        };
+            data: result.data
+        });
     }
     catch(err) {
-        throw err;
+        res.status(400).json({
+            success: false,
+            message: err.message
+        });
+    }
+}
+
+async function get_org_rides(req, res) {
+    try {
+        const result = await rideService.get_org_rides(req.user);
+        if(!result.success) {
+            return res.status(400).json({
+                success: false,
+                message: result.message
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: result.data
+        });
+    }
+    catch(err) {
+        res.status(400).json({
+            success: false,
+            message: err.message
+        });
     }
 }
 
 module.exports = {
-    get_org_rides,
-    get_rides
+    get_rides,
+    get_org_rides
 };
