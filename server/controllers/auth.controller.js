@@ -62,7 +62,39 @@ async function login(req, res) {
     }
 }
 
+async function google_sign_in(req, res) {
+    try{
+        const data = req.body;
+        const result = await authService.google_sign_in_user(data);
+
+        if(!result.success) {
+            res.status(400).json({
+                success: result.success,
+                message: result.message
+            });
+        }
+
+        const jwt = create_jwt_token(result.data);
+
+        res.cookie('token', jwt, { httpOnly: true, sameSite: 'lax', secure: false, maxAge: 60*60*24*7*1000 });
+
+        res.status(200).json({
+            success: true,
+            data: {
+                id: result.data._id,
+                username: result.data.username,
+                email: result.data.email,
+                role: result.data.role
+            }
+        })
+    }
+    catch(err) {
+        throw err;
+    }
+}
+
 module.exports = {
     login,
-    signup
+    signup,
+    google_sign_in
 };
