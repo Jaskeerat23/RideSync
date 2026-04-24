@@ -1,0 +1,130 @@
+sinup-
+we are building a web application for riders, now in our platform we have multiple roles - riders, organizers, sponsors. the flow 
+of our sign up page is like we on the very first page we ask for basic user details - 
+
+.userName 
+.email (unique, indexed) 
+.password (hashed) 
+.pfp – image
+
+then when the user clicks the 'next' button we go to a new page that asks for user roles
+.rider
+.organizer
+.sponsor
+
+then after selecting only one option and clicking 'next' we move to the new page, the final page in which we ask for role-specific-deetials
+for each role the details are:
+
+1. rider:
+    .name 
+    .age 
+    .city 
+    .Bike [Array of String] – A user can have many bikes 
+    .ridingStyle [Array of String] – A user can prefer many styles 
+    .bio[String] – Max 250 Words
+
+2. organizer:
+    .banner 
+    .name 
+    .description 
+    .socailLinks (if any) 
+    .website (if any) 
+    .GSTIN
+
+3. sponsor:
+    .brandName 
+    .banner 
+    .website 
+    .description
+
+and then on this final page we will have a button 'Register'. After this we call the backend routes to do the API things and inserting to DB.
+
+I want you to create a modern frontend for this signup page. The colors to be used must be modern - white, black, orange (pastel).
+The font choice should be serif, modern and on the second page where we ask for role use something like cards stacked horzontally like:
+[RIDER | ORG | SPONSOR], where when we hover over it, it shows a basic detail of that role and shadows it etc.
+
+update-1:
+
+The existing sign up page is good but i want a new one, do changes in the existing files, create new ONLY IF NEEDED, now what i want you to do
+is make a new sign up page, the data at each page will be same, the flow too, change is the style. In the first page-
+Make a division like on the left side there is an image (D:\Full Stack PBL\client\public\images\sign-up-page-1.jpg) and on the right there is
+the form for the data to be taken from that page, now there is a change that is rules must be followed-
+1. username cannot have spaces
+2. username cannot have any ther special characters then _$
+3. The password rules must also be followed, like password length > 8, uppercase lowercase combo number to be used etc.
+
+if any of the above mentioned rule is violated then form button will be dsiabled,
+
+on the second page follow the same structure as of now and also on the third page.
+
+The colors for this phase are white, orange (#FF4D00), black.
+
+Ignore any image to be taken as data, just add a skeleton like a non functional button,
+
+Also now you have to connect it to backend for that you can read the server directory
+
+
+new prompt
+
+I have designed the API and routes required for login and signup and you can analyze them by reading files in dreictory server/routes. 
+We have a multi-page signup setup, 
+
+User details (Page-1)
+        |
+Role (Page-2)
+        |
+Role Details(Page-3)
+
+On page 1 you must make a form that asks for these information:
+.userName 
+.email (unique, indexed) 
+.password (hashed) 
+.pfp – image
+
+Username and password have some rules :
+.User name must not have any spaces 
+.Password must contain min 8 chars and max 32 chars
+.Password must have atleast 1 uppercase letter
+.Password must be alphanumeric and contain one special character
+
+If any of these rules are not followed then the next button must freeze. When user types these rules as they are completed must be marked green like in modern websites
+The image button must be a skeleton like you should add it but it is non-functional right now
+The styling of this page is like you will have a split screen:
+[LEFT (50%) | RIGHT (50%)]
+on the left half there comes an image whose path is D:\Full Stack PBL\client\public\images\sign-up-page-1.jpg and on the right is 
+the form (1st-page). This styling is for the first page only
+
+When next is clicked then you must go to next page i.e. Page-2 that asks for the role of the user - Rider, Organizer, sponsor
+the styling of this role is like you will place 3 cards stacked horizontally displaying the label adn when user hovers over them
+the card gets a slight bigger and color changes and shows a basic detail about that role, i.e. a good transition
+
+When user selects a roles you must go to the next page Page-3 where user asks for role specific detials:
+1. rider:
+    .name 
+    .age 
+    .city 
+    .Bike [Array of String] – A user can have many bikes 
+    .ridingStyle [Array of String] – A user can prefer many styles 
+    .bio[String] – Max 250 Words
+
+2. organizer:
+    .banner 
+    .name 
+    .description 
+    .socailLinks (if any) 
+    .website (if any) 
+    .GSTIN
+
+3. sponsor:
+    .brandName 
+    .banner 
+    .website 
+    .description
+
+again all image buttons are non-functional i.ee nothing should happen if pressed.
+Then once all the information is filled correctly you send the data to the API endpoint using POST method, i guess the rooute will be like:
+"localhost:3000/auth/signup".
+
+The technologies to be used are HTML CSS JS only no react or advanced frontend framework
+The color you are allowed to use are white black and orange (#ff4d00). The font must be sans serif modern. The overall design must be modern.
+The font choice must be Monsterrat for headings and for text it must be roboto.
