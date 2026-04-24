@@ -92,6 +92,6 @@ const rideSchema = new mongoose.Schema({
     timestamps: true // automatically adds createdAt & updatedAt
 });
 
-const Ride = mongoose.model('Ride', rideSchema);
+const Ride = mongoose.model('Rides', rideSchema, 'Rides');
 
 module.exports = Ride;
