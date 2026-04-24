@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const { OAuth2Client } = require('google-auth-library'); 
 require('dotenv').config();
 
 const user = require('../models/user.model.js');
@@ -11,6 +12,45 @@ async function connect_to_db() {
     try {
         const res = await mongoose.connect(process.env.MONGODB_URI_JAS);
         console.log("Connected Successfully")
+    }
+    catch(err) {
+        throw err;
+    }
+}
+
+async function google_sign_in_user(data) {
+    try{
+        await connect_to_db();
+        console.log(data);
+        const client = new OAuth2Client();
+        const ticket = await client.verifyIdToken({
+            idToken : data.credential,
+            audience : process.env.CLIENT_ID
+        });
+
+        const payload = ticket.getPayload();
+        const email = payload.email;
+        console.log(email);
+        const res = await user.findOne({email: email});
+
+        if(res == null) {
+            return {
+                success: false,
+                message: "User Invalid, please sign up"
+            }
+        }
+
+        const dataOP = {
+            _id: res._id,
+            username: res.userName,
+            email: res.email,
+            role: res.role
+        };
+
+        return {
+            success: true,
+            data: dataOP
+        };
     }
     catch(err) {
         throw err;
@@ -163,5 +203,6 @@ async function sign_up_user(data) {
 
 module.exports = {
     login_user,
-    sign_up_user
+    sign_up_user,
+    google_sign_in_user
 };
