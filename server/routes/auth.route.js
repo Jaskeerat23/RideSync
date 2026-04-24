@@ -8,5 +8,6 @@ router.use(express.urlencoded({extended: true}));
 
 router.post('/login', authController.login);
 router.post('/signup', authController.signup);
+router.post('/google_sign_in', authController.google_sign_in);
 
 module.exports = router;
