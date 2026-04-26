@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Create Ride</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+<style>
+    body {
+        margin: 0;
+        font-family: 'Segoe UI', sans-serif;
+        background: #f4f6f8;
+    }
+
+    .container {
+        display: flex;
+        justify-content: center;
+        padding: 30px;
+    }
+
+    .form {
+        width: 500px;
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    label {
+        font-weight: 600;
+        margin-top: 10px;
+        display: block;
+    }
+
+    input, select {
+        width: 100%;
+        padding: 10px;
+        margin-top: 6px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+    }
+
+    input:focus, select:focus {
+        outline: none;
+        border-color: #ff4d00;
+    }
+
+    button {
+        width: 100%;
+        padding: 12px;
+        background: #ff4d00;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        margin-top: 15px;
+    }
+
+    button:hover {
+        background: #e04300;
+    }
+
+    .map-box {
+        height: 150px;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 10px;
+    }
+</style>
+
+</head>
+<body>
+
+<div class="container">
+<div class="form">
+
+
+<h2>Create Ride</h2>
+
+<!-- LOCATION -->
+<label>Start Location</label>
+<input id="startSearch" placeholder="Search start..." />
+<div id="startMap" class="map-box"></div>
+
+<label>End Location</label>
+<input id="endSearch" placeholder="Search end..." />
+<div id="endMap" class="map-box"></div>
+
+<!-- ENTRY FEE -->
+<label>Entry Fee</label>
+<input id="entryFee" type="number" />
+
+<!-- DATES -->
+<label>Start Date</label>
+<input id="startDate" type="date" />
+
+<label>End Date</label>
+<input id="endDate" type="date" />
+
+<!-- TIME -->
+<label>Time</label>
+<input id="time" placeholder="e.g. 7:00 AM" />
+
+<!-- LENGTH -->
+<label>Length (km)</label>
+<input id="length" type="number" />
+
+<!-- DIFFICULTY -->
+<label>Difficulty</label>
+<select id="difficulty">
+    <option value="">Select</option>
+    <option>Easy</option>
+    <option>Moderate</option>
+    <option>Hard</option>
+    <option>Extreme</option>
+</select>
+
+<!-- TYPE -->
+<label>Ride Type</label>
+<select id="type">
+    <option value="">Select</option>
+    <option>Adventure</option>
+    <option>Highway</option>
+    <option>City</option>
+    <option>OffRoad</option>
+</select>
+
+<!-- MAX SEATS -->
+<label>Max Seats</label>
+<input id="maxSeats" type="number" />
+
+<!-- TITLE -->
+<label>Title</label>
+<input id="title" />
+
+<!-- STATUS -->
+<label>Status</label>
+<select id="status">
+    <option>Upcoming</option>
+    <option>Ongoing</option>
+    <option>Cancelled</option>
+    <option>Completed</option>
+</select>
+
+<!-- COMMUNICATION -->
+<label>Communication Link</label>
+<input id="communicationLink" />
+
+<label>Communication Type</label>
+<select id="communicationType">
+    <option value="">Select</option>
+    <option>telegram</option>
+    <option>whatsapp</option>
+    <option>instagram</option>
+</select>
+
+<button onclick="submitRide()">Create Ride</button>
+
+</div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+let startMap, endMap;
+let startLocation = null;
+let endLocation = null;
+let startMarker = null;
+let endMarker = null;
+
+function initMaps() {
+    startMap = L.map('startMap').setView([28.6139, 77.2090], 5);
+    endMap = L.map('endMap').setView([28.6139, 77.2090], 5);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(startMap);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(endMap);
+
+    startMap.on('click', e => {
+        const { lat, lng } = e.latlng;
+        startLocation = { lat, lng };
+
+        if (startMarker) startMap.removeLayer(startMarker);
+        startMarker = L.marker([lat, lng]).addTo(startMap);
+    });
+
+    endMap.on('click', e => {
+        const { lat, lng } = e.latlng;
+        endLocation = { lat, lng };
+
+        if (endMarker) endMap.removeLayer(endMarker);
+        endMarker = L.marker([lat, lng]).addTo(endMap);
+    });
+}
+
+async function searchLocation(query, map, setLocation, markerRef) {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`);
+    const data = await res.json();
+
+    if (!data.length) return alert("Location not found");
+
+    const lat = +data[0].lat;
+    const lon = +data[0].lon;
+
+    map.setView([lat, lon], 12);
+
+    if (markerRef.marker) map.removeLayer(markerRef.marker);
+    markerRef.marker = L.marker([lat, lon]).addTo(map);
+
+    setLocation({ lat, lng: lon });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    initMaps();
+
+    const sRef = { marker: null };
+    const eRef = { marker: null };
+
+    startSearch.onchange = e => searchLocation(e.target.value, startMap, loc => startLocation = loc, sRef);
+    endSearch.onchange = e => searchLocation(e.target.value, endMap, loc => endLocation = loc, eRef);
+});
+
+async function submitRide() {
+    if (!startLocation || !endLocation) {
+        return alert("Select both locations");
+    }
+
+    const data = {
+        entryFee: +entryFee.value || 0,
+        startDate: startDate.value,
+        endDate: endDate.value,
+        time: time.value,
+        length: +length.value,
+        difficulty: difficulty.value,
+        type: type.value,
+        maxSeats: +maxSeats.value,
+        title: title.value,
+        status: status.value,
+        communicationLink: communicationLink.value,
+        communicationType: communicationType.value,
+        startLocation,
+        endLocation
+    };
+
+    console.log(data);
+
+    try {
+        const res = await fetch("http://localhost:3000/rides/create", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        alert(result.success ? "Ride created!" : result.message);
+
+    } catch (err) {
+        console.error(err);
+        alert("Error creating ride");
+    }
+}
+</script>
+
+</body>
+</html>
