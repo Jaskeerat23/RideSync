@@ -4,8 +4,17 @@ const create_jwt_token = require('../controllers/session.controller.js');
 async function signup(req, res) {
     try {
         const data = req.body;
+        const imgFile = req.file;
+
+        if(imgFile.size > 2 * 1024 * 1024) {
+            return res.status(400).json({
+                success: false,
+                message: "Please upload the image within 2MB"
+            });
+        }
+
         console.log(data);
-        const result = await authService.sign_up_user(data);
+        const result = await authService.sign_up_user(data, imgFile);
         console.log("result data from singup is ", result.data);
         const jwt = await create_jwt_token(result.data);
 
@@ -68,7 +77,7 @@ async function google_sign_in(req, res) {
         const result = await authService.google_sign_in_user(data);
 
         if(!result.success) {
-            res.status(400).json({
+            return res.status(400).json({
                 success: result.success,
                 message: result.message
             });
