@@ -87,7 +87,13 @@ const rideSchema = new mongoose.Schema({
     communicationType: {
         type: String,
         enum: ['telegram', 'whatsapp', 'instagram']
-    }
+    },
+    
+    banner: {
+    type: String
+    },
+    startAddress: String,
+    endAddress: String
 
 }, { timestamps: true });
 

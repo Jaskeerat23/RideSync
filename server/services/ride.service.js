@@ -1,57 +1,31 @@
 const mongoose = require('mongoose');
-const Ride = require("../models/ride.model");
+const Ride = require('../models/ride.model');
 require('dotenv').config();
 
 async function connect_to_db() {
-    if (mongoose.connection.readyState === 1) return;
-    await mongoose.connect(process.env.MONGO_URI_ADARSH);
+    if (mongoose.connection.readyState === 0) {
+        await mongoose.connect(process.env.MONGO_URI_ADARSH);
+        console.log("DB Connected (ride.service)");
+    }
 }
 
-exports.createRide = async (data, user) => {
+exports.createRide = async (data) => {
 
     await connect_to_db();
-
-    if (!user || !user._id) {
-        throw new Error("Unauthorized user");
-    }
-
-    const {
-        startLocation,
-        endLocation,
-        title,
-        startDate,
-        endDate,
-        time,
-        maxSeats
-    } = data;
-
-    // Validation
-    if (!startLocation || !endLocation) {
-        throw new Error("Locations are required");
-    }
-
-    if (!startLocation.lat || !startLocation.lng) {
-        throw new Error("Invalid start location");
-    }
-
-    if (!endLocation.lat || !endLocation.lng) {
-        throw new Error("Invalid end location");
-    }
 
     const ride = await Ride.create({
         ...data,
 
-        // Use _id from JWT
-        userId: new mongoose.Types.ObjectId(user._id),
+        banner: data.banner,
 
         startLocation: {
             type: "Point",
-            coordinates: [startLocation.lng, startLocation.lat]
+            coordinates: [data.startLocation.lng, data.startLocation.lat]
         },
 
         endLocation: {
             type: "Point",
-            coordinates: [endLocation.lng, endLocation.lat]
+            coordinates: [data.endLocation.lng, data.endLocation.lat]
         }
     });
 

@@ -3,269 +3,268 @@
 <html>
 <head>
     <title>Create Ride</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-
+```
 <style>
-    body {
-        margin: 0;
-        font-family: 'Segoe UI', sans-serif;
-        background: #f4f6f8;
-    }
-
-    .container {
-        display: flex;
-        justify-content: center;
-        padding: 30px;
-    }
-
+    body { font-family: 'Segoe UI'; background:#f4f6f8; }
     .form {
-        width: 500px;
+        width: 520px; margin: 30px auto;
+        padding:20px; background:white;
+        border-radius:10px;
+        position: relative;
+    }
+
+    input, select, button {
+        width:100%; padding:10px; margin:8px 0;
+    }
+
+    .map-box { height:150px; margin-bottom:10px; }
+
+    .dropdown {
         background: white;
-        padding: 25px;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-
-    h2 {
-        text-align: center;
-        margin-bottom: 20px;
-    }
-
-    label {
-        font-weight: 600;
-        margin-top: 10px;
-        display: block;
-    }
-
-    input, select {
-        width: 100%;
-        padding: 10px;
-        margin-top: 6px;
-        margin-bottom: 10px;
-        border-radius: 8px;
         border: 1px solid #ccc;
-        font-size: 14px;
-    }
-
-    input:focus, select:focus {
-        outline: none;
-        border-color: #ff4d00;
-    }
-
-    button {
-        width: 100%;
-        padding: 12px;
-        background: #ff4d00;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        cursor: pointer;
-        margin-top: 15px;
-    }
-
-    button:hover {
-        background: #e04300;
-    }
-
-    .map-box {
-        height: 150px;
-        border-radius: 8px;
-        overflow: hidden;
+        max-height: 150px;
+        overflow-y: auto;
+        margin-top: -5px;
         margin-bottom: 10px;
+    }
+
+    .dropdown div {
+        padding: 8px;
+        cursor: pointer;
+    }
+
+    .dropdown div:hover {
+        background: #eee;
     }
 </style>
+```
 
 </head>
+
 <body>
 
-<div class="container">
 <div class="form">
-
-
 <h2>Create Ride</h2>
 
-<!-- LOCATION -->
-<label>Start Location</label>
-<input id="startSearch" placeholder="Search start..." />
+<label>Banner Image</label> <input type="file" id="banner" accept="image/*">
+
+<label>Title</label> <input id="title">
+
+<!-- START -->
+
+<label>Start Location</label> <input id="startSearch" placeholder="Search start location...">
+
+<div id="startDropdown" class="dropdown"></div>
 <div id="startMap" class="map-box"></div>
 
-<label>End Location</label>
-<input id="endSearch" placeholder="Search end..." />
+<!-- END -->
+
+<label>End Location</label> <input id="endSearch" placeholder="Search end location...">
+
+<div id="endDropdown" class="dropdown"></div>
 <div id="endMap" class="map-box"></div>
 
-<!-- ENTRY FEE -->
-<label>Entry Fee</label>
-<input id="entryFee" type="number" />
+<label>Entry Fee</label> <input id="entryFee" type="number">
 
-<!-- DATES -->
-<label>Start Date</label>
-<input id="startDate" type="date" />
+<label>Start Date</label> <input id="startDate" type="date">
 
-<label>End Date</label>
-<input id="endDate" type="date" />
+<label>End Date</label> <input id="endDate" type="date">
 
-<!-- TIME -->
-<label>Time</label>
-<input id="time" placeholder="e.g. 7:00 AM" />
+<label>Time</label> <input id="time">
 
-<!-- LENGTH -->
-<label>Length (km)</label>
-<input id="length" type="number" />
+<label>Length (km)</label> <input id="length" type="number">
 
-<!-- DIFFICULTY -->
-<label>Difficulty</label>
-<select id="difficulty">
-    <option value="">Select</option>
-    <option>Easy</option>
-    <option>Moderate</option>
-    <option>Hard</option>
-    <option>Extreme</option>
+<label>Difficulty</label> <select id="difficulty">
+
+<option>Easy</option>
+<option>Moderate</option>
+<option>Hard</option>
+<option>Extreme</option>
 </select>
 
-<!-- TYPE -->
-<label>Ride Type</label>
-<select id="type">
-    <option value="">Select</option>
-    <option>Adventure</option>
-    <option>Highway</option>
-    <option>City</option>
-    <option>OffRoad</option>
+<label>Type</label> <select id="type">
+
+<option>Adventure</option>
+<option>Highway</option>
+<option>City</option>
+<option>OffRoad</option>
 </select>
 
-<!-- MAX SEATS -->
-<label>Max Seats</label>
-<input id="maxSeats" type="number" />
+<label>Max Seats</label> <input id="maxSeats" type="number">
 
-<!-- TITLE -->
-<label>Title</label>
-<input id="title" />
+<label>Status</label> <select id="status">
 
-<!-- STATUS -->
-<label>Status</label>
-<select id="status">
-    <option>Upcoming</option>
-    <option>Ongoing</option>
-    <option>Cancelled</option>
-    <option>Completed</option>
+<option>Upcoming</option>
+<option>Ongoing</option>
+<option>Cancelled</option>
+<option>Completed</option>
 </select>
 
-<!-- COMMUNICATION -->
-<label>Communication Link</label>
-<input id="communicationLink" />
+<label>Communication Link</label> <input id="communicationLink">
 
-<label>Communication Type</label>
-<select id="communicationType">
-    <option value="">Select</option>
-    <option>telegram</option>
-    <option>whatsapp</option>
-    <option>instagram</option>
+<label>Communication Type</label> <select id="communicationType">
+
+<option>telegram</option>
+<option>whatsapp</option>
+<option>instagram</option>
 </select>
 
 <button onclick="submitRide()">Create Ride</button>
 
 </div>
-</div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
-let startMap, endMap;
-let startLocation = null;
-let endLocation = null;
-let startMarker = null;
-let endMarker = null;
+let startLocation=null,endLocation=null;
+let startAddress="", endAddress="";
 
-function initMaps() {
-    startMap = L.map('startMap').setView([28.6139, 77.2090], 5);
-    endMap = L.map('endMap').setView([28.6139, 77.2090], 5);
+let startMap, endMap;
+let startMarker=null, endMarker=null;
+
+function initMaps(){
+    startMap=L.map('startMap').setView([28.6,77.2],5);
+    endMap=L.map('endMap').setView([28.6,77.2],5);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(startMap);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(endMap);
 
-    startMap.on('click', e => {
-        const { lat, lng } = e.latlng;
-        startLocation = { lat, lng };
-
-        if (startMarker) startMap.removeLayer(startMarker);
-        startMarker = L.marker([lat, lng]).addTo(startMap);
+    startMap.on('click',e=>{
+        startLocation=e.latlng;
+        if(startMarker) startMap.removeLayer(startMarker);
+        startMarker=L.marker(e.latlng).addTo(startMap);
     });
 
-    endMap.on('click', e => {
-        const { lat, lng } = e.latlng;
-        endLocation = { lat, lng };
-
-        if (endMarker) endMap.removeLayer(endMarker);
-        endMarker = L.marker([lat, lng]).addTo(endMap);
+    endMap.on('click',e=>{
+        endLocation=e.latlng;
+        if(endMarker) endMap.removeLayer(endMarker);
+        endMarker=L.marker(e.latlng).addTo(endMap);
     });
 }
 
-async function searchLocation(query, map, setLocation, markerRef) {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`);
-    const data = await res.json();
+window.onload=initMaps;
 
-    if (!data.length) return alert("Location not found");
-
-    const lat = +data[0].lat;
-    const lon = +data[0].lon;
-
-    map.setView([lat, lon], 12);
-
-    if (markerRef.marker) map.removeLayer(markerRef.marker);
-    markerRef.marker = L.marker([lat, lon]).addTo(map);
-
-    setLocation({ lat, lng: lon });
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    initMaps();
-
-    const sRef = { marker: null };
-    const eRef = { marker: null };
-
-    startSearch.onchange = e => searchLocation(e.target.value, startMap, loc => startLocation = loc, sRef);
-    endSearch.onchange = e => searchLocation(e.target.value, endMap, loc => endLocation = loc, eRef);
-});
-
-async function submitRide() {
-    if (!startLocation || !endLocation) {
-        return alert("Select both locations");
+// 🔥 AUTOCOMPLETE
+async function fetchSuggestions(query, dropdown, map, setLoc, setAddr, markerRef){
+    if(query.length<3){
+        dropdown.innerHTML="";
+        return;
     }
 
-    const data = {
-        entryFee: +entryFee.value || 0,
-        startDate: startDate.value,
-        endDate: endDate.value,
-        time: time.value,
-        length: +length.value,
-        difficulty: difficulty.value,
-        type: type.value,
-        maxSeats: +maxSeats.value,
-        title: title.value,
-        status: status.value,
-        communicationLink: communicationLink.value,
-        communicationType: communicationType.value,
-        startLocation,
-        endLocation
-    };
+    const res=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`);
+    const data=await res.json();
 
-    console.log(data);
+    dropdown.innerHTML="";
 
+    data.forEach(place=>{
+        const div=document.createElement("div");
+        div.innerText=place.display_name;
+
+        div.onclick=()=>{
+            const lat=+place.lat;
+            const lon=+place.lon;
+
+            map.setView([lat,lon],12);
+
+            if(markerRef.marker) map.removeLayer(markerRef.marker);
+            markerRef.marker=L.marker([lat,lon]).addTo(map);
+
+            setLoc({lat, lng:lon});
+            setAddr(place.display_name);
+
+            dropdown.innerHTML="";
+        };
+
+        dropdown.appendChild(div);
+    });
+}
+
+// EVENTS
+document.addEventListener("DOMContentLoaded",()=>{
+    const sRef={marker:null};
+    const eRef={marker:null};
+
+    startSearch.addEventListener("input",e=>{
+        fetchSuggestions(
+            e.target.value,
+            startDropdown,
+            startMap,
+            loc=>startLocation=loc,
+            addr=>startAddress=addr,
+            sRef
+        );
+    });
+
+    endSearch.addEventListener("input",e=>{
+        fetchSuggestions(
+            e.target.value,
+            endDropdown,
+            endMap,
+            loc=>endLocation=loc,
+            addr=>endAddress=addr,
+            eRef
+        );
+    });
+});
+
+// SUBMIT
+async function submitRide(){
     try {
+        if(!startLocation || !endLocation){
+            return alert("Select locations");
+        }
+
+        const fd = new FormData();
+        
+        // Only append banner if file exists
+        if (banner.files[0]) {
+            fd.append("banner", banner.files[0]);
+        }
+
+        fd.append("title", title.value);
+        fd.append("entryFee", entryFee.value);
+        fd.append("startDate", startDate.value);
+        fd.append("endDate", endDate.value);
+        fd.append("time", time.value);
+        fd.append("length", length.value);
+        fd.append("difficulty", difficulty.value);
+        fd.append("type", type.value);
+        fd.append("maxSeats", maxSeats.value);
+        fd.append("status", status.value);
+        fd.append("communicationLink", communicationLink.value);
+        fd.append("communicationType", communicationType.value);
+
+        fd.append("startLocation", JSON.stringify(startLocation));
+        fd.append("endLocation", JSON.stringify(endLocation));
+        fd.append("startAddress", startAddress);
+        fd.append("endAddress", endAddress);
+
         const res = await fetch("http://localhost:3000/rides/create", {
             method: "POST",
             credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
+            body: fd
         });
 
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.message || 'Failed to create ride');
+        }
+
         const result = await res.json();
-        alert(result.success ? "Ride created!" : result.message);
+        
+        if (result.success) {
+            alert("Ride Created Successfully!");
+            // Optional: redirect or clear form
+            // window.location.href = 'dashboard.html';
+        } else {
+            alert("Error: " + (result.message || 'Unknown error'));
+        }
 
     } catch (err) {
-        console.error(err);
-        alert("Error creating ride");
+        console.error("Error:", err);
+        alert("Error creating ride: " + err.message);
     }
 }
 </script>
