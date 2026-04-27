@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Ride = require('../models/ride.model');
+const user = require('../models/user.model');
 require('dotenv').config();
 
 async function connect_to_db() {
@@ -39,7 +40,8 @@ async function get_rides() {
         await connect_to_db();
         
         const res = await Ride.aggregate([
-            { $sample: { size: 10} }
+            { $match: { status: 'Upcoming' } },
+            { $sample: { size: 20} }
         ]);
 
         if(res.length === 0) {
@@ -59,7 +61,77 @@ async function get_rides() {
     }
 }
 
+async function get_rides_type_based(type, user_cords) {
+    try{
+        const res = await Ride.aggregate([
+            { $geoNear: {
+                near: {
+                    type: 'Point', coordinates: [ user_cords.lng, user_cords.lat ]
+                },
+                query: {
+                    type: type, status: 'Upcoming'
+                },
+                distanceField: "dist.calculated",
+                spherical: true
+            } },
+            { $limit: 20 },
+            { $sort: { startDate: 1 } }
+        ]);
+
+        if(res.length == 0) {
+            return {
+                success: false,
+                message: 'No rides available'
+            };
+        }
+
+        return {
+            success: true,
+            data: res
+        };
+    }
+    catch(err) {
+        throw err;
+    }
+}
+
+async function get_rides_diff_based(diff, user_cords) {
+    try{
+        const res = await Ride.aggregate([
+            { $geoNear: {
+                near: {
+                    type: 'Point', coordinates: [ user_cords.lng, user_cords.lat ]
+                },
+                query: {
+                    difficulty: diff, status: 'Upcoming'
+                },
+                distanceField: "dist.calculated",
+                spherical: true
+            } },
+            { $limit: 20 },
+            { $sort: { startDate: 1 } }
+        ]);
+
+        if(res.length == 0) {
+            return {
+                success: false,
+                message: 'No rides available'
+            };
+        }
+
+        return {
+            success: true,
+            data: res
+        };
+    }
+    catch(err) {
+        throw err;
+    }
+}
+
 module.exports = {
     get_org_rides,
-    get_rides
+    get_rides,
+    get_rides_type_based,
+    get_rides_diff_based
 };
