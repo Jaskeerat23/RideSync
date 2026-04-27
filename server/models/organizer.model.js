@@ -9,6 +9,6 @@ const orgSchema = new mongoose.Schema({
     GSTIN: {type: String}
 })
 
-const org = new mongoose.model('Organizers', orgSchema, 'Organizers');
+const org = mongoose.model('Organizers', orgSchema, 'Organizers');
 
 module.exports = org;
