@@ -13,15 +13,46 @@ async function connect_to_db() {
     }
 }
 
+async function create_ride(data) {
+    try {
+        await connect_to_db();
+        
+        const ride = await Ride.create({
+            ...data,
+    
+            banner: data.banner,
+    
+            startLocation: {
+                type: "Point",
+                coordinates: [data.startLocation.lng, data.startLocation.lat]
+            },
+    
+            endLocation: {
+                type: "Point",
+                coordinates: [data.endLocation.lng, data.endLocation.lat]
+            }
+        });
+    
+        return {
+            success: true,
+            data: ride
+        };
+    }
+    catch(err) {
+        throw err;
+    }
+}
+
 async function get_org_rides(data) {
     try {
-        connect_to_db();
+        await connect_to_db();
         const _id = data._id;
         console.log("Inside ride fetcher, ", _id);
 
-        const result = await Ride.find({
-            userId: new mongoose.Types.ObjectId(_id)
-        });
+        const result = await Ride.find(
+            { userId: new mongoose.Types.ObjectId(_id) },
+            { _id: 1, title: 1, banner: 1, difficulty: 1, type: 1}
+        );
 
         console.log(result);
 
@@ -35,13 +66,23 @@ async function get_org_rides(data) {
     }
 }
 
-async function get_rides() {
+async function get_rides(user_cords) {
     try {
         await connect_to_db();
         
         const res = await Ride.aggregate([
-            { $match: { status: 'Upcoming' } },
-            { $sample: { size: 20} }
+            { $geoNear: {
+                near: {
+                    type: 'Point', coordinates: [ user_cords.lng, user_cords.lat ]
+                },
+                query: {
+                    type: type, status: 'Upcoming'
+                },
+                distanceField: "dist.calculated",
+                spherical: true
+            } },
+            { $limit: 20 },
+            { $project : { _id: 1, title: 1, banner: 1, difficulty: 1, type: 1} }
         ]);
 
         if(res.length === 0) {
@@ -75,6 +116,7 @@ async function get_rides_type_based(type, user_cords) {
                 spherical: true
             } },
             { $limit: 20 },
+            { $project : { _id: 1, title: 1, banner: 1, difficulty: 1, type: 1} },
             { $sort: { startDate: 1 } }
         ]);
 
@@ -109,6 +151,7 @@ async function get_rides_diff_based(diff, user_cords) {
                 spherical: true
             } },
             { $limit: 20 },
+            { $project : { _id: 1, title: 1, banner: 1, difficulty: 1, type: 1} },
             { $sort: { startDate: 1 } }
         ]);
 
@@ -130,6 +173,7 @@ async function get_rides_diff_based(diff, user_cords) {
 }
 
 module.exports = {
+    create_ride,
     get_org_rides,
     get_rides,
     get_rides_type_based,
