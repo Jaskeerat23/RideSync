@@ -2,8 +2,9 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 const authRoutes = require('./auth.route.js');
-const dashboardRoutes = require('./rides.route.js');
+const rideRoutes = require('./rides.route.js');
 const cors = require('cors');
+const rider = require('../models/rider.model.js');
 dotenv.config();
 
 const app = express();
@@ -19,7 +20,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/auth', authRoutes);
-app.use('/dashboard', dashboardRoutes);
+app.use('/rides', rideRoutes);
 
 app.listen(3000, () => {
     console.log("Server running on port 3000");
