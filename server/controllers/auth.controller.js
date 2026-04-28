@@ -26,7 +26,8 @@ async function signup(req, res) {
                 _id: result.data._id,
                 username: result.data.username,
                 email: result.data.email,
-                role: result.data.role
+                role: result.data.role,
+                pfp: result.data.pfp
             }
         });
     }
@@ -58,7 +59,8 @@ async function login(req, res) {
                     _id: result.data._id,
                     username: result.data.username,
                     email: result.data.email,
-                    role: result.data.role
+                    role: result.data.role,
+                    pfp: result.data.pfp
                 }
             })
         }
@@ -93,7 +95,8 @@ async function google_sign_in(req, res) {
                 id: result.data._id,
                 username: result.data.username,
                 email: result.data.email,
-                role: result.data.role
+                role: result.data.role,
+                pfp: result.data.pfp
             }
         })
     }
