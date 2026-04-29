@@ -11,5 +11,5 @@ router.get('/ride_difficulty', authMiddleware.authMiddleware, authMiddleware.aut
 router.get('/ride_type', authMiddleware.authMiddleware, authMiddleware.authorizeRole('rider'), rideController.get_rides_type_based)
 router.get('/org_rides', authMiddleware.authMiddleware, authMiddleware.authorizeRole('organizer'), rideController.get_org_rides);
 router.post('/create_ride', authMiddleware.authMiddleware, authMiddleware.authorizeRole('organizer'), rideController.create_ride);
-
+router.get('/ride_details/:id', authMiddleware.authMiddleware, rideController.ride_details);
 module.exports = router;
