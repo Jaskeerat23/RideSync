@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RideSync — Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --red: #e8192c;
+    --red-hover: #ff2035;
+    --red-glow: rgba(232,25,44,0.3);
+    --card-bg: rgba(10,10,12,0.82);
+    --input-bg: rgba(255,255,255,0.04);
+    --input-border: rgba(232,25,44,0.55);
+    --text: #f0f0f2;
+    --muted: #888;
+    --font: 'Montserrat', sans-serif;
+  }
+
+  html, body { height: 100%; font-family: var(--font); overflow: hidden; }
+
+  .bg {
+    position: fixed; inset: 0; z-index: 0;
+    background-image: url('./public/images/hero-rider.jpg');
+    background-size: cover;
+    background-position: center;
+  }
+  .bg-overlay {
+    position: fixed; inset: 0; z-index: 1;
+    background: linear-gradient(135deg,rgba(0,0,0,0.88) 0%,rgba(10,0,0,0.78) 50%,rgba(0,0,0,0.90) 100%);
+    backdrop-filter: blur(2px);
+  }
+
+  .page {
+    position: relative; z-index: 2;
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 2rem;
+  }
+
+  .card {
+    width: 100%; max-width: 430px;
+    background: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 18px;
+    padding: 2.8rem 2.6rem 2.2rem;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.03), 0 32px 64px rgba(0,0,0,0.75), 0 0 100px rgba(232,25,44,0.07);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    animation: card-in 0.55s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  @keyframes card-in {
+    from { opacity: 0; transform: translateY(28px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .logo-wrap { display: flex; justify-content: center; margin-bottom: 1.4rem; }
+  .logo-wrap img {
+    height: 80px; width: auto; object-fit: contain;
+    filter: drop-shadow(0 4px 18px rgba(232,25,44,0.45));
+  }
+  .logo-fallback { display: none; align-items: center; gap: 10px; }
+  .logo-fallback .diamond {
+    width: 38px; height: 38px;
+    background: var(--red);
+    clip-path: polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+  }
+  .logo-fallback .wordmark { font-size: 2rem; font-weight: 900; letter-spacing: 0.04em; color: #fff; line-height: 1; }
+  .logo-fallback .wordmark span { color: var(--red); }
+
+  .tagline { text-align: center; font-size: 0.66rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.6rem; }
+
+  .divider { height: 1px; background: linear-gradient(to right, transparent, rgba(232,25,44,0.5), transparent); margin-bottom: 1.7rem; }
+
+  .form-group { margin-bottom: 1.1rem; }
+  label { display: block; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.45rem; }
+  input[type="text"], input[type="password"] {
+    width: 100%; background: var(--input-bg); border: 1.5px solid var(--input-border);
+    border-radius: 10px; padding: 0.82rem 1rem; color: var(--text);
+    font-family: var(--font); font-size: 0.92rem; font-weight: 500; outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    caret-color: var(--red);
+  }
+  input[type="text"]:focus, input[type="password"]:focus {
+    border-color: var(--red); background: rgba(232,25,44,0.04);
+    box-shadow: 0 0 0 3.5px var(--red-glow);
+  }
+  input::placeholder { color: #333; font-weight: 400; }
+
+  .error-msg { display: none; font-size: 0.75rem; color: #ff6070; margin-top: 0.8rem; text-align: center; font-weight: 500; }
+
+  .btn-login {
+    width: 100%; margin-top: 0.6rem; padding: 0.92rem;
+    background: var(--red); border: none; border-radius: 10px; color: #fff;
+    font-family: var(--font); font-size: 0.95rem; font-weight: 800;
+    letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer;
+    position: relative; overflow: hidden;
+    transition: background 0.18s, transform 0.12s, box-shadow 0.18s;
+    box-shadow: 0 4px 24px rgba(232,25,44,0.35);
+  }
+  .btn-login::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg,rgba(255,255,255,0.1) 0%,transparent 55%); pointer-events: none; }
+  .btn-login:hover:not(:disabled) { background: var(--red-hover); box-shadow: 0 6px 32px rgba(232,25,44,0.55); transform: translateY(-1px); }
+  .btn-login:active:not(:disabled) { transform: scale(0.99); }
+  .btn-login:disabled { opacity: 0.6; cursor: not-allowed; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .sep { display: flex; align-items: center; gap: 0.75rem; margin: 1.3rem 0; color: #2e2e35; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+  .sep::before, .sep::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.07); }
+
+  .btn-google {
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 0.82rem; background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 10px; color: #ccc; font-family: var(--font); font-size: 0.88rem; font-weight: 600;
+    cursor: pointer; transition: background 0.18s, border-color 0.18s, color 0.18s;
+  }
+  .btn-google:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.18); color: #fff; }
+  .btn-google svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  .footer-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 1.1rem 0; }
+  .card-footer { text-align: center; font-size: 0.78rem; color: var(--muted); font-weight: 500; }
+  .card-footer a { color: var(--red); text-decoration: none; font-weight: 700; }
+  .card-footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+<div class="bg-overlay"></div>
+
+<div class="page">
+  <div class="card">
+
+    <div class="logo-wrap">
+      <!-- Replace logo.png with your actual logo path -->
+      <img src="./public/images/rs-logo-04-04.png" alt="RideSync"
+           onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='flex';" />
+      <div id="logo-fallback" class="logo-fallback">
+        <div class="diamond"></div>
+        <div class="wordmark">RIDE<span>SYNC</span></div>
+      </div>
+    </div>
+
+    <div class="tagline">Ride Together. Arrive Stronger.</div>
+    <div class="divider"></div>
+
+    <form id="loginForm" novalidate>
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" placeholder="Enter your username" autocomplete="username" required/>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="••••••••••" autocomplete="current-password" required/>
+      </div>
+
+      <div class="error-msg" id="errorMsg"></div>
+      <button type="submit" class="btn-login" id="loginBtn">Login</button>
+    </form>
+
+    <div class="sep">or</div>
+
+    <button class="btn-google" onclick="triggerGoogleSignIn()">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Sign in with Google
+    </button>
+
+    <div class="footer-divider"></div>
+    <div class="card-footer">
+      Don't have an account? <a href="new_signup.html">Sign Up</a>
+    </div>
+
+    <div id="g_id_onload"
+         data-client_id="452037498715-75kg9drj8u18f1lhc6d97emjq91jdpec.apps.googleusercontent.com"
+         data-context="signin"
+         data-ux_mode="popup"
+         data-callback="handleGoogleCredential"
+         data-auto_prompt="false">
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const btn      = document.getElementById('loginBtn');
+    const errEl    = document.getElementById('errorMsg');
+
+    if (!username || !password) { showError('Please fill in all fields.'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Logging in...';
+    errEl.style.display = 'none';
+
+    try {
+      const res  = await fetch('http://localhost:3000/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) { showError(data.message || 'Invalid credentials. Please try again.'); return; }
+
+      localStorage.setItem('username', data.data.username);
+      localStorage.setItem('pfp',      data.data.pfp || '');
+      localStorage.setItem('email',    data.data.email || '');
+      localStorage.setItem('role',     data.data.role);
+
+      if (data.data.role === 'organizer')    window.location.href = 'new_organizer_dashboard.html';
+      else if (data.data.role === 'rider')   window.location.href = 'new_rider_dashboard.html';
+      else showError('Unknown role received. Contact support.');
+
+    } catch (err) {
+      showError('Could not reach the server. Is the backend running?');
+      console.error(err);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Login';
+    }
+  });
+
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function triggerGoogleSignIn() {
+    if (window.google && google.accounts) google.accounts.id.prompt();
+    else alert('Replace YOUR_GOOGLE_CLIENT_ID with your actual Google OAuth Client ID.');
+  }
+
+async function handleGoogleCredential(response) {
+  try {
+    console.log(response);
+    const res = await fetch('http://localhost:3000/auth/google_sign_in', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(response)
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showError(data.message || 'Google sign-in failed. Please try again.');
+      return;
+    }
+
+    localStorage.setItem('username', data.data?.username || '');
+    localStorage.setItem('pfp',      data.data?.pfp      || '');
+    localStorage.setItem('email',    data.data?.email    || '');
+    localStorage.setItem('role',     data.data?.role     || '');
+
+
+    const role = data.data?.role;
+    if (role === 'organizer')  window.location.href = 'new_organizer_dashboard.html';
+    else if (role === 'rider') window.location.href = 'new_rider_dashboard.html';
+    else showError('Unknown role received from server.');
+
+  } catch (err) {
+    showError('Could not reach the server. Is the backend running?');
+    console.error('Google sign-in error:', err);
+  }
+}
+</script>
+</body>
+</html>
