@@ -17,7 +17,7 @@ async function signup(req, res) {
         const result = await authService.sign_up_user(data, imgFile);
         console.log("result data from singup is ", result.data);
         const jwt = await create_jwt_token(result.data);
-
+        console.log("showing JWT ", jwt);
         res.cookie('token', jwt, { httpOnly: true, sameSite: 'lax', secure: false, maxAge: 60*60*24*7*1000 });
 
         res.status(201).json({
@@ -42,7 +42,7 @@ async function signup(req, res) {
 async function login(req, res) {
     try {
         const data = req.body;
-        console.log(data);
+        console.log("The data is ", data);
         result = await authService.login_user(data);
         if(!result.success) {
             return res.status(400).json({
@@ -85,10 +85,11 @@ async function google_sign_in(req, res) {
             });
         }
 
-        const jwt = create_jwt_token(result.data);
+        const jwt = await create_jwt_token(result.data);
 
         res.cookie('token', jwt, { httpOnly: true, sameSite: 'lax', secure: false, maxAge: 60*60*24*7*1000 });
-
+        console.log("Cookie is set");
+        console.log("token is ", jwt);
         res.status(200).json({
             success: true,
             data: {
