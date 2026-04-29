@@ -13,6 +13,85 @@ async function connect_to_db() {
     }
 }
 
+//Yash Code
+
+async function ride_details(rideId, user) {
+    try {
+        await connect_to_db();
+
+        if(!mongoose.Types.ObjectId.isValid(rideId)) {
+            return {
+                success: false,
+                message: "Invalid ride id"
+            };
+        }
+
+        const ride = await Ride.findById(rideId);
+        if(!ride) {
+            return {
+                success: false,
+                message: "Ride not found"
+            };
+        }
+
+        const response = { ride: ride };
+
+        // ---------- RIDER ----------
+        if(user.role === 'rider') {
+            const rider = await Rider.findOne({
+                userId: new mongoose.Types.ObjectId(user._id)
+            });
+
+            let canBook;
+            if(ride.bookedSeats >= ride.maxSeats) {
+                // Ride is full
+                canBook = false;
+            }
+            else if(ride.crossBike === false) {
+                // Brand-locked ride: rider must own the matching bike
+                if(rider && Array.isArray(rider.bikes) && rider.bikes.includes(ride.brand)) {
+                    canBook = true;
+                }
+                else {
+                    canBook = false;
+                }
+            }
+            else {
+                // Cross-bike allowed (or field not set) and seats available
+                canBook = true;
+            }
+
+            response.canBook = canBook;
+        }
+
+        // ---------- ORGANIZER ----------
+        else if(user.role === 'organizer') {
+            // The existing code in get_org_rides filters Ride by userId == user._id,
+            // so ride.userId stores the User _id (matching that pattern here).
+            let canEdit = false;
+            if(ride.userId && ride.userId.toString() === user._id.toString()) {
+                canEdit = true;
+            }
+            response.canEdit = canEdit;
+        }
+
+        // ---------- SPONSOR ----------
+        else if(user.role === 'sponsor') {
+            response.canContactForSponsor = true;
+        }
+
+        return {
+            success: true,
+            data: response
+        };
+    }
+    catch(err) {
+        throw err;
+    }
+}
+
+//Adarsh Code
+
 async function create_ride(data) {
     try {
         await connect_to_db();
@@ -42,6 +121,8 @@ async function create_ride(data) {
         throw err;
     }
 }
+
+//Jaskeerat Code
 
 async function get_org_rides(data) {
     try {
@@ -76,7 +157,7 @@ async function get_rides(user_cords) {
                     type: 'Point', coordinates: [ user_cords.lng, user_cords.lat ]
                 },
                 query: {
-                    type: type, status: 'Upcoming'
+                    status: 'Upcoming'
                 },
                 distanceField: "dist.calculated",
                 spherical: true
@@ -162,6 +243,8 @@ async function get_rides_diff_based(diff, user_cords) {
             };
         }
 
+        console.log(res);
+
         return {
             success: true,
             data: res
@@ -173,6 +256,7 @@ async function get_rides_diff_based(diff, user_cords) {
 }
 
 module.exports = {
+    ride_details,
     create_ride,
     get_org_rides,
     get_rides,

@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RideSync — Ride Details</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ═══════════════════════════════════════════════
+       DESIGN TOKENS — identical to dashboard / signup
+    ═══════════════════════════════════════════════ */
+    :root {
+      --black:      #000000;
+      --white:      #ffffff;
+      --orange:     #ff4d00;
+      --orange-dim: rgba(255, 77, 0, 0.12);
+      --orange-mid: rgba(255, 77, 0, 0.35);
+
+      --gray-100: #f5f5f5;
+      --gray-200: #e8e8e8;
+      --gray-400: #999999;
+      --gray-600: #555555;
+      --gray-800: #1a1a1a;
+
+      --font-head: 'Montserrat', sans-serif;
+      --font-body: 'Roboto', sans-serif;
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+
+      --shadow-sm:     0 2px 8px rgba(0,0,0,0.06);
+      --shadow-md:     0 6px 24px rgba(0,0,0,0.1);
+      --shadow-lg:     0 16px 48px rgba(0,0,0,0.14);
+      --shadow-orange: 0 4px 20px rgba(255,77,0,0.25);
+
+      --transition:      0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: 0.4s  cubic-bezier(0.4, 0, 0.2, 1);
+
+      --nav-h: 64px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { height: 100%; font-size: 16px; }
+    body {
+      font-family: var(--font-body);
+      background: var(--gray-100);
+      color: var(--black);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    a { text-decoration: none; color: inherit; }
+
+    /* ═══════════════════════════════════════════════
+       NAVBAR — matches rider_dashboard
+    ═══════════════════════════════════════════════ */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--nav-h);
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      z-index: 200;
+    }
+    .nav-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .nav-brand-icon { font-size: 20px; filter: drop-shadow(0 0 6px var(--orange)); }
+    .nav-brand-name {
+      font-family: var(--font-head); font-size: 20px; font-weight: 800;
+      color: var(--black); letter-spacing: -0.02em;
+    }
+    .nav-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--orange-dim); border: 1px solid var(--orange-mid);
+      border-radius: 100px; padding: 3px 10px;
+      font-family: var(--font-head); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--orange);
+    }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .nav-username {
+      font-family: var(--font-head); font-size: 13px; font-weight: 600; color: var(--gray-600);
+    }
+    .nav-avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--black); color: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-head); font-size: 14px; font-weight: 800;
+      cursor: pointer; border: 2px solid transparent;
+      transition: border-color var(--transition), transform var(--transition);
+      overflow: hidden;
+    }
+    .nav-avatar:hover { border-color: var(--orange); transform: scale(1.05); }
+    .nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* ═══════════════════════════════════════════════
+       MAIN LAYOUT
+    ═══════════════════════════════════════════════ */
+    .main {
+      padding-top: calc(var(--nav-h) + 24px);
+      padding-bottom: 120px;
+      max-width: 920px;
+      margin: 0 auto;
+      padding-left: 28px;
+      padding-right: 28px;
+    }
+
+    /* ── Back button ── */
+    .back-row { margin-bottom: 18px; }
+    .back-link {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-head); font-size: 12px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase; color: var(--gray-600);
+      padding: 8px 14px; border-radius: 100px; border: 1.5px solid var(--gray-200);
+      background: var(--white); cursor: pointer;
+      transition: all var(--transition);
+    }
+    .back-link:hover {
+      border-color: var(--black); color: var(--black); transform: translateX(-2px);
+    }
+
+    /* ═══════════════════════════════════════════════
+       HERO BANNER
+    ═══════════════════════════════════════════════ */
+    .ride-hero {
+      position: relative;
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      min-height: 280px;
+      background: var(--black);
+      box-shadow: var(--shadow-lg);
+      margin-bottom: 28px;
+    }
+    .ride-hero-bg {
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, #111 0%, #1a1a1a 50%, #ff4d00 160%);
+      transition: transform 0.6s var(--transition-slow);
+    }
+    .ride-hero-bg.has-image { background-size: cover; background-position: center; }
+    .ride-hero-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);
+    }
+    .ride-hero-content {
+      position: relative; z-index: 1;
+      padding: 36px 40px 32px;
+      min-height: 280px;
+      display: flex; flex-direction: column; justify-content: flex-end;
+      color: var(--white);
+    }
+    .hero-badges {
+      position: absolute; top: 22px; left: 22px; right: 22px;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      z-index: 2;
+    }
+    .pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 100px; padding: 5px 12px;
+      font-family: var(--font-head); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--white);
+    }
+    .pill.spots { background: var(--orange); border-color: var(--orange); }
+    .pill.spots.full { background: #ef4444; border-color: #ef4444; }
+    .pill.status-upcoming  { background: rgba(34,197,94,0.85);  border-color: transparent; }
+    .pill.status-ongoing   { background: rgba(245,158,11,0.85); border-color: transparent; }
+    .pill.status-cancelled { background: rgba(239,68,68,0.85);  border-color: transparent; }
+    .pill.status-completed { background: rgba(99,102,241,0.85); border-color: transparent; }
+
+    .hero-emoji {
+      font-size: 48px; line-height: 1; margin-bottom: 12px;
+      filter: drop-shadow(0 4px 14px rgba(0,0,0,0.5));
+    }
+    .ride-hero-title {
+      font-family: var(--font-head); font-size: 38px; font-weight: 900;
+      letter-spacing: -0.04em; line-height: 1.1; margin-bottom: 12px;
+      max-width: 640px;
+    }
+    .ride-hero-route {
+      display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      font-family: var(--font-head); font-size: 14px; font-weight: 600;
+      color: rgba(255,255,255,0.85); letter-spacing: 0.02em;
+    }
+    .route-arrow { color: var(--orange); font-size: 16px; }
+
+    /* ═══════════════════════════════════════════════
+       META GRID
+    ═══════════════════════════════════════════════ */
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px; margin-bottom: 28px;
+    }
+    .meta-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      transition: box-shadow var(--transition), transform var(--transition), border-color var(--transition);
+    }
+    .meta-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+      border-color: var(--orange-mid);
+    }
+    .meta-card-label {
+      font-family: var(--font-head); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray-400);
+      margin-bottom: 8px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .meta-card-value {
+      font-family: var(--font-head); font-size: 17px; font-weight: 800;
+      color: var(--black); letter-spacing: -0.02em; line-height: 1.2;
+    }
+    .meta-card-sub {
+      font-size: 11px; color: var(--gray-400); margin-top: 4px;
+    }
+    .diff-easy     { color: #22c55e; }
+    .diff-moderate { color: #f59e0b; }
+    .diff-hard     { color: #ef4444; }
+    .diff-extreme  { color: #7c3aed; }
+
+    /* ═══════════════════════════════════════════════
+       INFO SECTIONS
+    ═══════════════════════════════════════════════ */
+    .info-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      padding: 24px 28px;
+      margin-bottom: 18px;
+    }
+    .info-card-title {
+      font-family: var(--font-head); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray-400);
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .info-card-body {
+      font-size: 14.5px; color: var(--gray-600); line-height: 1.7;
+    }
+    .info-card-body p + p { margin-top: 8px; }
+
+    /* ── Organizer row ── */
+    .organizer-row { display: flex; align-items: center; gap: 14px; }
+    .org-avatar-lg {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: var(--black); color: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-head); font-size: 22px; font-weight: 900;
+      flex-shrink: 0;
+    }
+    .org-info-name {
+      font-family: var(--font-head); font-size: 17px; font-weight: 800;
+      color: var(--black); letter-spacing: -0.02em;
+    }
+    .org-info-meta {
+      font-size: 12px; color: var(--gray-400); margin-top: 2px;
+    }
+
+    /* ── Sponsor strip ── */
+    .sponsor-list {
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .sponsor-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--gray-100); border: 1px solid var(--gray-200);
+      border-radius: 100px; padding: 6px 14px;
+      font-family: var(--font-head); font-size: 12px; font-weight: 700;
+      color: var(--gray-600); letter-spacing: 0.02em;
+    }
+    .sponsor-chip::before { content: '🤝'; font-size: 12px; }
+
+    /* ── Communication link ── */
+    .comm-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 14px;
+      padding: 16px 20px;
+      background: var(--gray-100);
+      border-radius: var(--radius-md);
+    }
+    .comm-text {
+      font-family: var(--font-head); font-size: 13px; font-weight: 700;
+      color: var(--gray-600); display: flex; align-items: center; gap: 8px;
+    }
+    .comm-link-btn {
+      font-family: var(--font-head); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 8px 16px; border-radius: 100px; border: none;
+      background: var(--black); color: var(--white); cursor: pointer;
+      transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
+    }
+    .comm-link-btn:hover {
+      background: var(--orange); box-shadow: var(--shadow-orange);
+      transform: translateY(-1px);
+    }
+
+    /* ═══════════════════════════════════════════════
+       ACTION FOOTER (sticky on small screens)
+    ═══════════════════════════════════════════════ */
+    .action-footer {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-xl);
+      padding: 22px 28px;
+      display: flex; align-items: center; justify-content: space-between; gap: 18px;
+      box-shadow: var(--shadow-md);
+      flex-wrap: wrap;
+    }
+    .action-summary {
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .action-summary-headline {
+      font-family: var(--font-head); font-size: 16px; font-weight: 800;
+      color: var(--black); letter-spacing: -0.02em;
+    }
+    .action-summary-sub {
+      font-size: 12.5px; color: var(--gray-600);
+    }
+    .action-summary-sub.warn  { color: #f59e0b; }
+    .action-summary-sub.error { color: #ef4444; }
+    .action-buttons {
+      display: flex; gap: 10px; flex-wrap: wrap;
+    }
+    .btn-action {
+      font-family: var(--font-head); font-size: 13px; font-weight: 800;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      padding: 14px 26px; min-height: 50px;
+      border-radius: var(--radius-md); border: none;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+      transition: background var(--transition), box-shadow var(--transition),
+                  transform var(--transition), opacity var(--transition);
+    }
+    .btn-action.primary {
+      background: var(--orange); color: var(--white);
+      box-shadow: var(--shadow-orange);
+    }
+    .btn-action.primary:hover:not(:disabled) {
+      background: #e64400; transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(255,77,0,0.35);
+    }
+    .btn-action.dark {
+      background: var(--black); color: var(--white);
+    }
+    .btn-action.dark:hover:not(:disabled) {
+      background: var(--orange); box-shadow: var(--shadow-orange);
+      transform: translateY(-2px);
+    }
+    .btn-action.outline {
+      background: var(--white); color: var(--gray-600);
+      border: 1.5px solid var(--gray-200);
+    }
+    .btn-action.outline:hover:not(:disabled) {
+      border-color: #ef4444; color: #ef4444; background: #fef2f2;
+    }
+    .btn-action:disabled {
+      opacity: 0.45; cursor: not-allowed; box-shadow: none; transform: none !important;
+    }
+
+    /* ═══════════════════════════════════════════════
+       SKELETON / EMPTY / ERROR STATES
+    ═══════════════════════════════════════════════ */
+    .skeleton-hero {
+      height: 280px; border-radius: var(--radius-xl);
+      background: var(--gray-200); position: relative; overflow: hidden;
+      margin-bottom: 28px;
+    }
+    .skeleton-hero::after, .skeleton-line::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.7) 50%, transparent 100%);
+      animation: shimmer 1.4s infinite;
+    }
+    .skeleton-line {
+      background: var(--gray-200); border-radius: 4px;
+      position: relative; overflow: hidden;
+    }
+    @keyframes shimmer {
+      from { transform: translateX(-100%); }
+      to   { transform: translateX(100%); }
+    }
+    .skeleton-meta-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 14px; margin-bottom: 28px;
+    }
+    .skeleton-meta {
+      height: 90px; border-radius: var(--radius-lg);
+      background: var(--white); border: 1px solid var(--gray-200);
+      padding: 18px;
+    }
+
+    .error-state, .empty-state {
+      text-align: center; padding: 80px 24px;
+      background: var(--white); border-radius: var(--radius-xl);
+      border: 1px solid var(--gray-200);
+    }
+    .error-icon, .empty-icon {
+      font-size: 64px; display: block; margin-bottom: 18px; opacity: 0.5;
+    }
+    .error-title {
+      font-family: var(--font-head); font-size: 22px; font-weight: 800;
+      color: var(--black); margin-bottom: 8px; letter-spacing: -0.02em;
+    }
+    .error-desc {
+      font-size: 14px; color: var(--gray-600); margin-bottom: 22px;
+      max-width: 380px; margin-left: auto; margin-right: auto;
+    }
+
+    /* ═══════════════════════════════════════════════
+       TOAST
+    ═══════════════════════════════════════════════ */
+    #toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--black); color: var(--white);
+      padding: 12px 24px; border-radius: 100px;
+      font-family: var(--font-head); font-weight: 700; font-size: 13px;
+      letter-spacing: 0.02em;
+      box-shadow: var(--shadow-lg);
+      z-index: 9999; opacity: 0;
+      transition: all 0.3s var(--transition);
+      white-space: nowrap;
+    }
+    #toast.visible {
+      opacity: 1; transform: translateX(-50%) translateY(0);
+    }
+
+    /* ═══════════════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════════════ */
+    @media (max-width: 760px) {
+      .meta-grid, .skeleton-meta-grid { grid-template-columns: repeat(2, 1fr); }
+      .ride-hero-content { padding: 28px 24px 24px; }
+      .ride-hero-title { font-size: 28px; }
+      .action-footer { padding: 18px 20px; }
+      .info-card { padding: 20px 22px; }
+    }
+    @media (max-width: 480px) {
+      .main { padding-left: 16px; padding-right: 16px; }
+      .meta-grid, .skeleton-meta-grid { grid-template-columns: 1fr 1fr; }
+      .ride-hero-title { font-size: 24px; }
+      .navbar { padding: 0 16px; }
+      .nav-username { display: none; }
+      .action-buttons { width: 100%; }
+      .btn-action { flex: 1; padding: 14px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════
+       NAVBAR
+  ═══════════════════════════════════ -->
+  <nav class="navbar">
+    <div class="nav-brand" id="navHome">
+      <span class="nav-brand-icon">⚡</span>
+      <span class="nav-brand-name">RideSync</span>
+      <span class="nav-badge" id="navBadge">🏍️ Rider</span>
+    </div>
+    <div class="nav-right">
+      <span class="nav-username" id="navUsername">—</span>
+      <div class="nav-avatar" id="navAvatar">?</div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════
+       MAIN
+  ═══════════════════════════════════ -->
+  <main class="main">
+
+    <!-- BACK BUTTON -->
+    <div class="back-row">
+      <button class="back-link" id="backBtn">← Back</button>
+    </div>
+
+    <!-- DYNAMIC CONTENT (skeleton / page / error) -->
+    <div id="content">
+      <!-- Initial skeleton -->
+      <div id="skeleton">
+        <div class="skeleton-hero"></div>
+        <div class="skeleton-meta-grid">
+          <div class="skeleton-meta">
+            <div class="skeleton-line" style="height:10px;width:50%;margin-bottom:12px;"></div>
+            <div class="skeleton-line" style="height:18px;width:75%;"></div>
+          </div>
+          <div class="skeleton-meta">
+            <div class="skeleton-line" style="height:10px;width:50%;margin-bottom:12px;"></div>
+            <div class="skeleton-line" style="height:18px;width:75%;"></div>
+          </div>
+          <div class="skeleton-meta">
+            <div class="skeleton-line" style="height:10px;width:50%;margin-bottom:12px;"></div>
+            <div class="skeleton-line" style="height:18px;width:75%;"></div>
+          </div>
+          <div class="skeleton-meta">
+            <div class="skeleton-line" style="height:10px;width:50%;margin-bottom:12px;"></div>
+            <div class="skeleton-line" style="height:18px;width:75%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <div id="toast"></div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* ══════════════════════════════════════════
+         CONFIG
+      ══════════════════════════════════════════ */
+      const API_BASE = 'http://localhost:3000';
+      // Endpoint mounted under /rides per the latest backend routing.
+      // If your backend still mounts at /dashboard, change RIDE_DETAILS_PATH accordingly.
+      const RIDE_DETAILS_PATH = '/rides/ride_details/';
+
+      /* ══════════════════════════════════════════
+         VISUAL LOOKUP MAPS
+      ══════════════════════════════════════════ */
+      const TYPE_EMOJI = {
+        adventure: '🏔️', highway: '🛣️', city: '🏙️', offroad: '🌲', default: '🏍️',
+      };
+      const TYPE_LABEL = {
+        adventure: 'Adventure', highway: 'Highway', city: 'City', offroad: 'Off-Road',
+      };
+      const COMM_ICON = {
+        telegram: '✈️', whatsapp: '💬', instagram: '📸',
+      };
+      const COMM_LABEL = {
+        telegram: 'Telegram', whatsapp: 'WhatsApp', instagram: 'Instagram',
+      };
+
+      /* ══════════════════════════════════════════
+         STATE
+      ══════════════════════════════════════════ */
+      let currentUser = { username: 'User', email: '', role: 'rider', _id: '' };
+      let activeRide  = null;
+      let activeFlags = {};   // { canBook?, canEdit?, canContactForSponsor? }
+
+      /* ══════════════════════════════════════════
+         INIT
+      ══════════════════════════════════════════ */
+      function init() {
+        loadUserFromCookie();
+        bindStaticEvents();
+
+        const rideId = new URLSearchParams(window.location.search).get('id');
+        if (!rideId) {
+          renderError(
+            'No ride selected',
+            'This page needs a ride id in the URL — try opening a ride from your dashboard.'
+          );
+          return;
+        }
+        fetchRideDetails(rideId);
+      }
+
+      /* ══════════════════════════════════════════
+         AUTH — read JWT from cookie
+      ══════════════════════════════════════════ */
+      function loadUserFromCookie() {
+        try {
+          const match = document.cookie.match(/(?:^|;\s*)token=([^;]+)/);
+          if (match) {
+            const payload = JSON.parse(atob(match[1].split('.')[1]));
+            currentUser = {
+              username: payload.username || payload.userName || 'User',
+              email:    payload.email    || '',
+              role:     payload.role     || 'rider',
+              _id:      payload._id      || payload.id || '',
+            };
+          }
+        } catch (_) { /* invalid token — fall through with defaults */ }
+        renderUserInfo();
+      }
+
+      function renderUserInfo() {
+        document.getElementById('navUsername').textContent = '@' + currentUser.username;
+        document.getElementById('navAvatar').textContent =
+          (currentUser.username || 'U')[0].toUpperCase();
+
+        const badge = document.getElementById('navBadge');
+        if (currentUser.role === 'organizer') badge.textContent = '🎯 Organizer';
+        else if (currentUser.role === 'sponsor') badge.textContent = '🤝 Sponsor';
+        else badge.textContent = '🏍️ Rider';
+      }
+
+      /* ══════════════════════════════════════════
+         FETCH
+      ══════════════════════════════════════════ */
+      async function fetchRideDetails(rideId) {
+        try {
+          const res = await fetch(API_BASE + RIDE_DETAILS_PATH + encodeURIComponent(rideId), {
+            method: 'GET',
+            credentials: 'include',
+          });
+
+          if (res.status === 401) {
+            renderError('Please sign in', 'You need to be logged in to view ride details.', {
+              actionLabel: 'Go to login', actionHref: 'login.html',
+            });
+            return;
+          }
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            renderError(
+              'Could not load ride',
+              body.message || ('Server returned HTTP ' + res.status),
+            );
+            return;
+          }
+
+          const json = await res.json();
+          // Backend response shape: { success: true, data: { ride: {...}, canBook?, canEdit?, canContactForSponsor? } }
+          const data = json.data || {};
+          activeRide  = data.ride || data;     // tolerate either shape
+          activeFlags = {
+            canBook:              data.canBook,
+            canEdit:              data.canEdit,
+            canContactForSponsor: data.canContactForSponsor,
+          };
+
+          if (!activeRide || !activeRide._id) {
+            renderError('Ride not found', 'We could not find a ride with that id.');
+            return;
+          }
+
+          renderRide(activeRide, activeFlags);
+        } catch (err) {
+          console.warn('Fetch failed', err);
+          renderError(
+            'Server unreachable',
+            'Could not reach the API. Make sure your backend is running on ' + API_BASE + '.'
+          );
+        }
+      }
+
+      /* ══════════════════════════════════════════
+         RENDER
+      ══════════════════════════════════════════ */
+      function renderRide(ride, flags) {
+        const typeKey   = (ride.type || 'default').toLowerCase();
+        const emoji     = TYPE_EMOJI[typeKey] || TYPE_EMOJI.default;
+        const typeLabel = TYPE_LABEL[typeKey] || ride.type || 'General';
+
+        const maxSeats    = Number(ride.maxSeats || 0);
+        const bookedSeats = Number(ride.bookedSeats || 0);
+        const spotsLeft   = Math.max(maxSeats - bookedSeats, 0);
+        const isFull      = spotsLeft <= 0;
+
+        const startStr = locationToString(ride.startLocation, ride.startAddress);
+        const endStr   = locationToString(ride.endLocation,   ride.endAddress);
+
+        const dateRange = formatDateRange(ride.startDate, ride.endDate);
+        const diffKey   = (ride.difficulty || '').toLowerCase();
+        const feeText   = ride.entryFee > 0 ? '₹' + ride.entryFee : 'Free';
+        const statusKey = (ride.status || 'upcoming').toLowerCase();
+
+        const orgName  = ride.userId?.username || ride.userId?.name || 'Organizer';
+        const orgInit  = (orgName[0] || 'O').toUpperCase();
+        const orgMeta  = ride.userId?.email || (ride.userId?.GSTIN ? 'GSTIN: ' + ride.userId.GSTIN : '');
+
+        const sponsorIds = Array.isArray(ride.sponsorId) ? ride.sponsorId : [];
+        const banner     = ride.banner;
+
+        const heroBgStyle = banner
+          ? `background-image:url('${escAttr(banner)}'); background-size:cover; background-position:center;`
+          : '';
+
+        const html = `
+          <div class="ride-hero">
+            <div class="ride-hero-bg ${banner ? 'has-image' : ''}" style="${heroBgStyle}"></div>
+            <div class="ride-hero-overlay"></div>
+            <div class="hero-badges">
+              <span class="pill spots ${isFull ? 'full' : ''}">
+                ${isFull ? 'Full' : spotsLeft + ' spots left'}
+              </span>
+              <div style="display:flex;gap:8px;">
+                <span class="pill">${escHtml(typeLabel)}</span>
+                <span class="pill status-${statusKey}">${escHtml(ride.status || 'Upcoming')}</span>
+              </div>
+            </div>
+            <div class="ride-hero-content">
+              <div class="hero-emoji">${emoji}</div>
+              <h1 class="ride-hero-title">${escHtml(ride.title || 'Untitled ride')}</h1>
+              <div class="ride-hero-route">
+                <span>📍 ${escHtml(startStr)}</span>
+                <span class="route-arrow">→</span>
+                <span>${escHtml(endStr)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="meta-grid">
+            <div class="meta-card">
+              <div class="meta-card-label">📅 Date</div>
+              <div class="meta-card-value">${escHtml(dateRange)}</div>
+              ${ride.time ? `<div class="meta-card-sub">⏰ ${escHtml(ride.time)}</div>` : ''}
+            </div>
+            <div class="meta-card">
+              <div class="meta-card-label">📏 Distance</div>
+              <div class="meta-card-value">${ride.length ? escHtml(ride.length) + ' km' : '—'}</div>
+            </div>
+            <div class="meta-card">
+              <div class="meta-card-label">💪 Difficulty</div>
+              <div class="meta-card-value diff-${diffKey}">
+                ${escHtml(ride.difficulty || '—')}
+              </div>
+            </div>
+            <div class="meta-card">
+              <div class="meta-card-label">💰 Entry fee</div>
+              <div class="meta-card-value">${escHtml(feeText)}</div>
+              <div class="meta-card-sub">${bookedSeats}/${maxSeats} seats booked</div>
+            </div>
+          </div>
+
+          ${sponsorIds.length ? `
+            <div class="info-card">
+              <div class="info-card-title">🤝 Sponsored by</div>
+              <div class="sponsor-list">
+                ${sponsorIds.map(s => `
+                  <span class="sponsor-chip">${escHtml(s.brandName || s.name || 'Sponsor')}</span>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          <div class="info-card">
+            <div class="info-card-title">📋 About this ride</div>
+            <div class="info-card-body">
+              ${buildAboutBlock(ride)}
+            </div>
+          </div>
+
+          ${ride.communicationLink ? `
+            <div class="info-card">
+              <div class="info-card-title">💬 Group chat</div>
+              <div class="comm-row">
+                <div class="comm-text">
+                  ${COMM_ICON[ride.communicationType] || '🔗'}
+                  ${escHtml(COMM_LABEL[ride.communicationType] || 'Link')}
+                </div>
+                <button class="comm-link-btn" id="commLinkBtn">Open chat →</button>
+              </div>
+            </div>
+          ` : ''}
+
+          <div class="info-card">
+            <div class="info-card-title">🎯 Organized by</div>
+            <div class="organizer-row">
+              <div class="org-avatar-lg">${orgInit}</div>
+              <div>
+                <div class="org-info-name">${escHtml(orgName)}</div>
+                ${orgMeta ? `<div class="org-info-meta">${escHtml(orgMeta)}</div>` : ''}
+              </div>
+            </div>
+          </div>
+
+          ${renderActionFooter(ride, flags, { isFull, spotsLeft })}
+        `;
+
+        document.getElementById('content').innerHTML = html;
+        bindDynamicEvents();
+      }
+
+      function buildAboutBlock(ride) {
+        const lines = [];
+        if (ride.time)             lines.push(`<p><strong>Start time:</strong> ${escHtml(ride.time)}</p>`);
+        if (ride.length)           lines.push(`<p><strong>Total distance:</strong> ${escHtml(ride.length)} km</p>`);
+        if (ride.difficulty)       lines.push(`<p><strong>Difficulty:</strong> ${escHtml(ride.difficulty)}</p>`);
+        if (ride.type)             lines.push(`<p><strong>Type:</strong> ${escHtml(ride.type)}</p>`);
+        if (ride.crossBike === false && ride.brand) {
+          lines.push(`<p><strong>Bike requirement:</strong> Restricted to ${escHtml(ride.brand)} riders</p>`);
+        } else if (ride.crossBike === true) {
+          lines.push(`<p><strong>Bike requirement:</strong> Open to all bike brands</p>`);
+        }
+        if (ride.entryFee > 0)     lines.push(`<p><strong>Entry fee:</strong> ₹${escHtml(ride.entryFee)}</p>`);
+        else                       lines.push(`<p><strong>Entry fee:</strong> Free to join</p>`);
+        if (!lines.length) lines.push(`<p>No additional details provided.</p>`);
+        return lines.join('');
+      }
+
+      /* ── Role-aware action footer ── */
+      function renderActionFooter(ride, flags, ctx) {
+        const role = currentUser.role;
+
+        if (role === 'rider') {
+          const canBook = !!flags.canBook;
+          let headline, sub, subClass = '', disabled = '';
+          if (canBook) {
+            headline = 'Ready to ride?';
+            sub      = 'Click below to lock your seat — you can chat with the organizer first if you want.';
+          } else {
+            disabled = 'disabled';
+            if (ctx.isFull) {
+              headline = 'This ride is fully booked';
+              sub      = 'All seats are taken. Check back later in case someone drops out.';
+              subClass = 'error';
+            } else if (ride.crossBike === false) {
+              headline = "Bike doesn't match";
+              sub      = 'This ride is locked to a specific bike brand. You don\'t have one in your garage.';
+              subClass = 'warn';
+            } else {
+              headline = 'Booking unavailable';
+              sub      = 'You can\'t book this ride right now.';
+              subClass = 'warn';
+            }
+          }
+          return `
+            <div class="action-footer">
+              <div class="action-summary">
+                <div class="action-summary-headline">${escHtml(headline)}</div>
+                <div class="action-summary-sub ${subClass}">${escHtml(sub)}</div>
+              </div>
+              <div class="action-buttons">
+                <button class="btn-action primary" id="btnBook" ${disabled}>
+                  Book this ride →
+                </button>
+              </div>
+            </div>`;
+        }
+
+        if (role === 'organizer') {
+          const canEdit = !!flags.canEdit;
+          if (canEdit) {
+            return `
+              <div class="action-footer">
+                <div class="action-summary">
+                  <div class="action-summary-headline">You organized this ride</div>
+                  <div class="action-summary-sub">Edit the details or cancel if plans changed.</div>
+                </div>
+                <div class="action-buttons">
+                  <button class="btn-action outline" id="btnCancel">Cancel ride</button>
+                  <button class="btn-action dark" id="btnEdit">Edit ride</button>
+                </div>
+              </div>`;
+          }
+          return `
+            <div class="action-footer">
+              <div class="action-summary">
+                <div class="action-summary-headline">Viewing another organizer's ride</div>
+                <div class="action-summary-sub">You can see the details, but only the owner can edit it.</div>
+              </div>
+            </div>`;
+        }
+
+        if (role === 'sponsor') {
+          const canContact = flags.canContactForSponsor !== false;
+          return `
+            <div class="action-footer">
+              <div class="action-summary">
+                <div class="action-summary-headline">Interested in sponsoring?</div>
+                <div class="action-summary-sub">Reach out to the organizer to discuss partnership terms.</div>
+              </div>
+              <div class="action-buttons">
+                <button class="btn-action primary" id="btnSponsor" ${canContact ? '' : 'disabled'}>
+                  Contact for sponsorship →
+                </button>
+              </div>
+            </div>`;
+        }
+
+        // Unknown role — read-only
+        return `
+          <div class="action-footer">
+            <div class="action-summary">
+              <div class="action-summary-headline">Ride details</div>
+              <div class="action-summary-sub">Sign in with the right role to interact with this ride.</div>
+            </div>
+          </div>`;
+      }
+
+      /* ══════════════════════════════════════════
+         ERROR / EMPTY STATE
+      ══════════════════════════════════════════ */
+      function renderError(title, desc, opts) {
+        opts = opts || {};
+        const action = opts.actionHref
+          ? `<a href="${escAttr(opts.actionHref)}" class="btn-action primary" style="display:inline-flex;text-decoration:none;">${escHtml(opts.actionLabel || 'Continue')}</a>`
+          : `<button class="btn-action dark" id="errRetry">Retry</button>`;
+        document.getElementById('content').innerHTML = `
+          <div class="error-state">
+            <span class="error-icon">⚠️</span>
+            <div class="error-title">${escHtml(title)}</div>
+            <div class="error-desc">${escHtml(desc)}</div>
+            ${action}
+          </div>`;
+        const retry = document.getElementById('errRetry');
+        if (retry) retry.addEventListener('click', () => window.location.reload());
+      }
+
+      /* ══════════════════════════════════════════
+         EVENTS
+      ══════════════════════════════════════════ */
+      function bindStaticEvents() {
+        document.getElementById('backBtn').addEventListener('click', () => {
+          if (window.history.length > 1) window.history.back();
+          else window.location.href = currentUser.role === 'organizer'
+            ? 'organizer_dashboard.html' : 'rider_dashboard.html';
+        });
+
+        document.getElementById('navHome').addEventListener('click', () => {
+          window.location.href = currentUser.role === 'organizer'
+            ? 'organizer_dashboard.html' : 'rider_dashboard.html';
+        });
+      }
+
+      function bindDynamicEvents() {
+        const commBtn = document.getElementById('commLinkBtn');
+        if (commBtn) commBtn.addEventListener('click', () => {
+          if (activeRide?.communicationLink) {
+            window.open(activeRide.communicationLink, '_blank', 'noopener');
+          }
+        });
+
+        const btnBook = document.getElementById('btnBook');
+        if (btnBook) btnBook.addEventListener('click', () => {
+          if (activeRide?.communicationLink) {
+            window.open(activeRide.communicationLink, '_blank', 'noopener');
+            showToast('🏍️ Group chat opened — confirm with the organizer there.');
+          } else {
+            showToast('Booking flow not wired up yet — contact organizer directly.');
+          }
+        });
+
+        const btnEdit = document.getElementById('btnEdit');
+        if (btnEdit) btnEdit.addEventListener('click', () => {
+          showToast('Edit flow coming soon.');
+        });
+
+        const btnCancel = document.getElementById('btnCancel');
+        if (btnCancel) btnCancel.addEventListener('click', () => {
+          if (!confirm('Cancel this ride? Riders who booked will be notified.')) return;
+          showToast('Cancel flow coming soon.');
+        });
+
+        const btnSponsor = document.getElementById('btnSponsor');
+        if (btnSponsor) btnSponsor.addEventListener('click', () => {
+          if (activeRide?.communicationLink) {
+            window.open(activeRide.communicationLink, '_blank', 'noopener');
+          } else {
+            showToast('No public contact link on this ride yet.');
+          }
+        });
+      }
+
+      /* ══════════════════════════════════════════
+         UTILITIES
+      ══════════════════════════════════════════ */
+      function locationToString(loc, addressFallback) {
+        if (!loc) return addressFallback || '?';
+        if (typeof loc === 'string') return loc;
+        // GeoJSON Point: { type: 'Point', coordinates: [lng, lat] }
+        if (loc.coordinates && Array.isArray(loc.coordinates)) {
+          if (addressFallback) return addressFallback;
+          const [lng, lat] = loc.coordinates;
+          return `${Number(lat).toFixed(3)}, ${Number(lng).toFixed(3)}`;
+        }
+        return addressFallback || '?';
+      }
+
+      function formatDateRange(start, end) {
+        if (!start) return 'Date TBD';
+        const s = new Date(start);
+        const e = end ? new Date(end) : null;
+        const opts = { day: 'numeric', month: 'short', year: 'numeric' };
+        if (!e || isNaN(e) || s.toDateString() === e.toDateString()) {
+          return isNaN(s) ? String(start) : s.toLocaleDateString('en-IN', opts);
+        }
+        return s.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) +
+               ' – ' + e.toLocaleDateString('en-IN', opts);
+      }
+
+      function escHtml(str) {
+        return String(str == null ? '' : str)
+          .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+          .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+      }
+      function escAttr(str) { return escHtml(str); }
+
+      function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('visible');
+        setTimeout(() => t.classList.remove('visible'), 3200);
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>
