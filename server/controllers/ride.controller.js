@@ -1,7 +1,35 @@
-const rideService = require('../services/ride.service');
+const rideService = require('../services/rides.service');
 const r2 = require('../config/r2');
 const { PutObjectCommand } = require('@aws-sdk/client-s3');
 
+//Yash Controller
+async function ride_details(req, res) {
+    try {
+        const rideId = req.params.id;
+        console.log(rideId);
+        const result = await rideService.ride_details(rideId, req.user);
+
+        if(!result.success) {
+            return res.status(400).json({
+                success: false,
+                message: result.message
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: result.data
+        });
+    }
+    catch(err) {
+        res.status(400).json({
+            success: false,
+            message: err.message
+        });
+    }
+}
+
+//Adarsh Controller
 async function create_ride(req, res) {
     try {
         const data = req.body;
@@ -43,13 +71,15 @@ async function create_ride(req, res) {
     }
 }
 
+//Jaskeerat Controller
 async function get_rides(req, res) {
     try {
         //No data required since this functions return
         //random rides to the user on very first login
         const lng = parseFloat(req.query.lng), lat = parseFloat(req.query.lat);
+        console.log(lng, " ", lat);
         const result = await rideService.get_rides({lng, lat});
-
+        console.log("result fetched");
         if(!result.success) {
             return res.status(400).json({
                 success: false,
@@ -63,6 +93,7 @@ async function get_rides(req, res) {
         });
     }
     catch(err) {
+        console.log("some error occured");
         res.status(400).json({
             success: false,
             message: err.message
@@ -143,6 +174,7 @@ async function get_rides_diff_based(req, res) {
 }
 
 module.exports = {
+    ride_details,
     create_ride,
     get_rides,
     get_org_rides,
