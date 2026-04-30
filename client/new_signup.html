@@ -1411,9 +1411,14 @@ function submitForm() {
   })
   .then(res => res.json())
   .then(data => {
+
+    localStorage.setItem('username', data.data.username);
+    localStorage.setItem('pfp',      data.data.pfp || '');
+    localStorage.setItem('email',    data.data.email || '');
+    localStorage.setItem('role',     data.data.role);
     const role = data?.data?.role;
     if (role === 'rider')          window.location.href = 'new_rider_dashboard.html';
-    else if (role === 'organizer') window.location.href = 'organizer_dashboard.html';
+    else if (role === 'organizer') window.location.href = 'new_organizer_dashboard.html';
     else {
       err.textContent = data?.message || 'Signup failed. Please try again.';
       err.classList.add('show');

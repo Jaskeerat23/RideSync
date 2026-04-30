@@ -570,7 +570,7 @@ main {
   </div>
 
   <div class="nav-right">
-    <a href="/about" class="nav-about">About us</a>
+    <a href="new_landing.html" class="nav-about">About us</a>
     <div class="pfp-wrap" id="pfpWrap">
       <div class="pfp-placeholder" id="pfpPlaceholder">?</div>
     </div>
@@ -708,7 +708,6 @@ function loadUser() {
 // GEOLOCATION  (resolved once, cached)
 // ════════════════════════════════════════════
 function getCoords() {
-  // Return cached coords if already resolved
   if (cachedCoords) return Promise.resolve(cachedCoords);
 
   return new Promise((resolve) => {
@@ -727,7 +726,6 @@ function getCoords() {
   });
 }
 
-// Build query string with optional lat/lng
 function buildQuery(params = {}) {
   const qs = new URLSearchParams(params);
   return qs.toString() ? `?${qs}` : '';
@@ -741,32 +739,31 @@ async function fetchRides() {
 
   const coords = await getCoords();
 
-  // Base coord params (only included when we have them)
-  const coordParams = coords ? { lat: coords.lat, lng: coords.lng } : {};
+  if (!coords) {
+    showLocationPrompt();
+    return;
+  }
+
+  const coordParams = { lat: coords.lat, lng: coords.lng };
 
   let url;
 
   if (!activeFilter) {
-    // No filter → /rider_rides
     url = `${BASE_URL}/rider_rides${buildQuery(coordParams)}`;
-
   } else if (activeFilter.group === 'difficulty') {
-    // Difficulty filter → /ride_difficulty?diff=Hard&lat=x&lng=y
     url = `${BASE_URL}/ride_difficulty${buildQuery({ diff: activeFilter.value, ...coordParams })}`;
-
   } else if (activeFilter.group === 'type') {
-    // Type filter → /ride_type?type=Adventure&lat=x&lng=y
     url = `${BASE_URL}/ride_type${buildQuery({ type: activeFilter.value, ...coordParams })}`;
   }
 
   try {
+    console.log(url);
     const res  = await fetch(url, { credentials: 'include' });
     const json = await res.json();
     console.log(json);
     if (!json.success) throw new Error('API error');
 
     fetchedRides = json.data;
-    console.log(fetchRides);
     shownCount = PAGE_SIZE;
     renderRides();
 
@@ -777,7 +774,7 @@ async function fetchRides() {
 }
 
 // ════════════════════════════════════════════
-// CLIENT-SIDE SEARCH  (on already-fetched data)
+// CLIENT-SIDE SEARCH
 // ════════════════════════════════════════════
 function getVisibleRides() {
   const q = searchQuery.toLowerCase().trim();
@@ -826,7 +823,9 @@ function renderRides() {
   }
 }
 
-// ── Card HTML ──
+// ════════════════════════════════════════════
+// CARD HTML
+// ════════════════════════════════════════════
 function cardHTML(ride, index) {
   const title  = ride.title || 'Untitled Ride';
   const desc   = ride.description
@@ -834,6 +833,9 @@ function cardHTML(ride, index) {
   const banner = ride.banner;
   const diff   = ride.difficulty || '';
   const type   = ride.type || '';
+
+  // Serialize the id — MongoDB ObjectId arrives as a string over JSON
+  const rideId = ride._id ? String(ride._id) : '';
 
   const imgHTML = banner
     ? `<img class="card-img" src="${banner}" alt="${title}" loading="lazy">`
@@ -846,7 +848,10 @@ function cardHTML(ride, index) {
       </div>`;
 
   return `
-  <a class="ride-card" href="/rides/${ride._id}" style="animation-delay:${index * 0.07}s">
+  <a class="ride-card"
+     href="ride_details.html?id=${rideId}"
+     data-id="${rideId}"
+     style="animation-delay:${index * 0.07}s">
     ${imgHTML}
     <div class="card-vignette"></div>
     ${type ? `<div class="card-type-chip">${type}</div>` : ''}
@@ -860,6 +865,21 @@ function cardHTML(ride, index) {
     </div>
   </a>`;
 }
+
+// ════════════════════════════════════════════
+// CARD CLICK — delegate on the grid container
+// ════════════════════════════════════════════
+document.getElementById('ridesContainer').addEventListener('click', function(e) {
+  const card = e.target.closest('.ride-card');
+  if (!card) return;
+
+  e.preventDefault();
+
+  const rideId = card.dataset.id;
+  if (!rideId) return;
+
+  window.location.href = `ride_details.html?id=${rideId}`;
+});
 
 // ════════════════════════════════════════════
 // ACTIVE FILTER TAG
@@ -910,13 +930,11 @@ document.getElementById('typeTrigger').addEventListener('click', e => {
   toggleAccordion('typeTrigger', 'typeList');
 });
 
-// Filter item click → hit backend
 document.querySelectorAll('.filter-list li').forEach(li => {
   li.addEventListener('click', () => {
     const group = li.dataset.filter;
     const value = li.dataset.value;
 
-    // Toggle off if same value clicked again
     if (activeFilter && activeFilter.group === group && activeFilter.value === value) {
       activeFilter = null;
     } else {
@@ -924,7 +942,7 @@ document.querySelectorAll('.filter-list li').forEach(li => {
     }
 
     syncFilterUI();
-    fetchRides(); // ← hits the appropriate backend route
+    fetchRides();
   });
 });
 
@@ -952,18 +970,18 @@ function clearAllFilters() {
   searchQuery  = '';
   document.getElementById('searchInput').value = '';
   syncFilterUI();
-  fetchRides(); // ← re-fetch unfiltered from backend
+  fetchRides();
 }
 
 document.getElementById('clearFilters').addEventListener('click', clearAllFilters);
 
 // ════════════════════════════════════════════
-// SEARCH  (client-side on already-fetched data)
+// SEARCH
 // ════════════════════════════════════════════
 document.getElementById('searchInput').addEventListener('input', e => {
   searchQuery = e.target.value;
   shownCount  = PAGE_SIZE;
-  renderRides(); // no new fetch — just re-render with search applied
+  renderRides();
 });
 
 // ════════════════════════════════════════════
@@ -999,6 +1017,47 @@ function showError() {
       <div class="state-text">Could not reach server</div>
     </div>`;
   document.getElementById('headlineCount').textContent = '// connection failed';
+}
+
+function showLocationPrompt() {
+  document.getElementById('ridesContainer').innerHTML = `
+    <div class="state-container">
+      <div class="state-icon">◎</div>
+      <div class="state-text">Location required to load rides</div>
+      <div style="
+        font-family:'Barlow',sans-serif;
+        font-size:.82rem;
+        color:var(--text-muted);
+        text-align:center;
+        max-width:280px;
+        line-height:1.6;
+      ">
+        RideSync sorts rides by distance from you.<br>
+        Allow location access in your browser and try again.
+      </div>
+      <button onclick="retryWithLocation()" style="
+        margin-top:.4rem;
+        font-family:'Montserrat',sans-serif;
+        font-size:.7rem; font-weight:800;
+        letter-spacing:.16em; text-transform:uppercase;
+        color:#fff; background:var(--red);
+        border:none; border-radius:6px;
+        padding:.7rem 1.8rem;
+        cursor:pointer;
+        transition: box-shadow .2s;
+      "
+      onmouseover="this.style.boxShadow='0 0 20px var(--red-glow)'"
+      onmouseout="this.style.boxShadow='none'"
+      >
+        Retry
+      </button>
+    </div>`;
+  document.getElementById('headlineCount').textContent = '// location needed';
+}
+
+function retryWithLocation() {
+  cachedCoords = null; // clear cache so getCoords() re-prompts the browser
+  fetchRides();
 }
 
 // ════════════════════════════════════════════
