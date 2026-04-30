@@ -19,7 +19,7 @@ const rideSchema = new mongoose.Schema({
         required: true
     },
 
-    sponsorId: [
+    sponsorId: [    
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Sponsors'
@@ -74,6 +74,11 @@ const rideSchema = new mongoose.Schema({
     title: {
         type: String,
         required: true
+    },
+
+    description: {
+        type:String,
+        default: "An aggressive ride for powerful riders"
     },
 
     status: {
