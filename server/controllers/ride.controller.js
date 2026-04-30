@@ -7,14 +7,17 @@ async function ride_details(req, res) {
     try {
         const rideId = req.params.id;
         console.log(rideId);
+        console.log("going to yash service layer")
         const result = await rideService.ride_details(rideId, req.user);
-
+        console.log("returned back to controller");
         if(!result.success) {
             return res.status(400).json({
                 success: false,
                 message: result.message
             });
         }
+
+        // console.log()
 
         res.status(200).json({
             success: true,
@@ -33,9 +36,9 @@ async function ride_details(req, res) {
 async function create_ride(req, res) {
     try {
         const data = req.body;
-
         data.startLocation = JSON.parse(data.startLocation);
         data.endLocation = JSON.parse(data.endLocation);
+        console.log(data);
 
         data.userId = req.user._id;
 
@@ -55,7 +58,7 @@ async function create_ride(req, res) {
             data.banner = `${process.env.R2_PUBLIC_URL}/${fileName}`;
         }
 
-        const result = await rideService.createRide(data);
+        const result = await rideService.create_ride(data);
 
         res.status(201).json({
             success: true,
@@ -126,7 +129,7 @@ async function get_org_rides(req, res) {
 
 async function get_rides_type_based(req, res) {
     try{
-        const type = req.query.type, lng = req.query.lng, lat = req.query.lat;
+        const type = req.query.type, lng = parseFloat(req.query.lng), lat = parseFloat(req.query.lat);
         const result = await rideService.get_rides_type_based(type, {lng, lat});
 
         if(!result.success) {
@@ -138,7 +141,7 @@ async function get_rides_type_based(req, res) {
 
         return res.status(200).json({
             success: true,
-            data: result
+            data: result.data
         });
     }
     catch(err) {
@@ -162,7 +165,7 @@ async function get_rides_diff_based(req, res) {
 
         return res.status(200).json({
             success: true,
-            data: result
+            data: result.data
         });
     }
     catch(err) {
