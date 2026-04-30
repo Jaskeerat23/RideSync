@@ -19,6 +19,8 @@ async function ride_details(rideId, user) {
     try {
         await connect_to_db();
 
+        console.log("inside ride_details");
+
         if(!mongoose.Types.ObjectId.isValid(rideId)) {
             return {
                 success: false,
@@ -27,20 +29,20 @@ async function ride_details(rideId, user) {
         }
 
         const ride = await Ride.findById(rideId);
+        console.log("ride res, ", ride);
         if(!ride) {
             return {
                 success: false,
                 message: "Ride not found"
             };
         }
-
         const response = { ride: ride };
-
+        console.log("building output");
         // ---------- RIDER ----------
         if(user.role === 'rider') {
-            const rider = await Rider.findOne({
-                userId: new mongoose.Types.ObjectId(user._id)
-            });
+            // const rider = await Rider.findOne({
+            //     userId: new mongoose.Types.ObjectId(user._id)
+            // });
 
             let canBook;
             if(ride.bookedSeats >= ride.maxSeats) {
@@ -79,7 +81,7 @@ async function ride_details(rideId, user) {
         else if(user.role === 'sponsor') {
             response.canContactForSponsor = true;
         }
-
+        console.log("builded output");
         return {
             success: true,
             data: response
@@ -95,20 +97,38 @@ async function ride_details(rideId, user) {
 async function create_ride(data) {
     try {
         await connect_to_db();
-        
+
+        const title = data.title, entryFee = parseFloat(data.entryFee), startDate = data.startDate, endDate = data.endDate;
+        const communicationLink = data.communicationLink, startAddress = data.startAddress, endAddress = data.endAddress;
+        const communicationType = data.communicationType, maxSeats = data.maxSeats, length = data.length, time = data.time;
+        const difficulty = data.difficulty;
+        const type = data.type;
         const ride = await Ride.create({
-            ...data,
+            userId: data.userId,
+            title: title,
+            entryFee: entryFee,
+            startDate: startDate,
+            endDate: endDate,
+            communicationType: communicationType,
+            communicationLink: communicationLink,
+            startAddress: startAddress,
+            endAddress: endAddress,
+            type: type,
+            difficulty: data.difficulty,
+            maxSeats: maxSeats,
+            time: time,
+            length: length,
     
             banner: data.banner,
     
             startLocation: {
                 type: "Point",
-                coordinates: [data.startLocation.lng, data.startLocation.lat]
+                coordinates: [data.startLocation.coordinates[0], data.startLocation.coordinates[1]]
             },
     
             endLocation: {
                 type: "Point",
-                coordinates: [data.endLocation.lng, data.endLocation.lat]
+                coordinates: [data.endLocation.coordinates[0], data.endLocation.coordinates[1]]
             }
         });
     
@@ -132,7 +152,7 @@ async function get_org_rides(data) {
 
         const result = await Ride.find(
             { userId: new mongoose.Types.ObjectId(_id) },
-            { _id: 1, title: 1, banner: 1, difficulty: 1, type: 1}
+            { _id: 1, title: 1, description: 1, banner: 1, difficulty: 1, type: 1}
         );
 
         console.log(result);
@@ -163,7 +183,7 @@ async function get_rides(user_cords) {
                 spherical: true
             } },
             { $limit: 20 },
-            { $project : { _id: 1, title: 1, banner: 1, difficulty: 1, type: 1} }
+            { $project : { _id: 1, title: 1, description: 1, banner: 1, difficulty: 1, type: 1} }
         ]);
 
         if(res.length === 0) {
@@ -197,7 +217,7 @@ async function get_rides_type_based(type, user_cords) {
                 spherical: true
             } },
             { $limit: 20 },
-            { $project : { _id: 1, title: 1, banner: 1, difficulty: 1, type: 1} },
+            { $project : { _id: 1, title: 1, description: 1, banner: 1, difficulty: 1, type: 1} },
             { $sort: { startDate: 1 } }
         ]);
 
@@ -232,7 +252,7 @@ async function get_rides_diff_based(diff, user_cords) {
                 spherical: true
             } },
             { $limit: 20 },
-            { $project : { _id: 1, title: 1, banner: 1, difficulty: 1, type: 1} },
+            { $project : { _id: 1, title: 1, description: 1, banner: 1, difficulty: 1, type: 1} },
             { $sort: { startDate: 1 } }
         ]);
 
