@@ -18,7 +18,7 @@ async function signup(req, res) {
         console.log("result data from singup is ", result.data);
         const jwt = await create_jwt_token(result.data);
         console.log("showing JWT ", jwt);
-        res.cookie('token', jwt, { httpOnly: true, sameSite: 'none', secure: false, maxAge: 60*60*24*7*1000 });
+        res.cookie('token', jwt, { httpOnly: true, sameSite: 'none', secure: true, maxAge: 60*60*24*7*1000 });
 
         res.status(201).json({
             success: true,
@@ -52,7 +52,7 @@ async function login(req, res) {
         }
         else {
             const jwt = await create_jwt_token(result.data);
-            res.cookie('token', jwt, { httpOnly: true, sameSite: 'none', secure: false, maxAge: 60*60*24*7*1000 });
+            res.cookie('token', jwt, { httpOnly: true, sameSite: 'none', secure: true, maxAge: 60*60*24*7*1000 });
             res.status(200).json({
                 success: true,
                 data:  {
@@ -87,7 +87,7 @@ async function google_sign_in(req, res) {
 
         const jwt = await create_jwt_token(result.data);
 
-        res.cookie('token', jwt, { httpOnly: true, sameSite: 'none', secure: false, maxAge: 60*60*24*7*1000 });
+        res.cookie('token', jwt, { httpOnly: true, sameSite: 'none', secure: true, maxAge: 60*60*24*7*1000 });
         console.log("Cookie is set");
         console.log("token is ", jwt);
         res.status(200).json({
