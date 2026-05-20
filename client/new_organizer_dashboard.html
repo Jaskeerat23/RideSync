@@ -570,7 +570,7 @@
 
     async function fetchRides() {
       try {
-        const res = await fetch('http://localhost:3000/rides/org_rides', {
+        const res = await fetch('https://ride-sync-backend-v1.onrender.com/rides/org_rides', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

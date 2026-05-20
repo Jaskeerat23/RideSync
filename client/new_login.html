@@ -207,7 +207,7 @@
     errEl.style.display = 'none';
 
     try {
-      const res  = await fetch('http://localhost:3000/auth/login', {
+      const res  = await fetch('https://ride-sync-backend-v1.onrender.com/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -250,7 +250,7 @@
 async function handleGoogleCredential(response) {
   try {
     console.log(response);
-    const res = await fetch('http://localhost:3000/auth/google_sign_in', {
+    const res = await fetch('https://ride-sync-backend-v1.onrender.com/auth/google_sign_in', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },

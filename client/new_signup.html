@@ -1405,7 +1405,7 @@ function submitForm() {
   submitBtn.disabled    = true;
   submitBtn.textContent = 'Submitting...';
 
-  fetch('http://localhost:3000/auth/signup', {
+  fetch('https://ride-sync-backend-v1.onrender.com/auth/signup', {
     method: 'POST',
     body: fd
   })
