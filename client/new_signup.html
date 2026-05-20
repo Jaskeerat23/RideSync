@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RideSync — Join the Brotherhood</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --red: #C8102E;
+    --red-bright: #FF1A3C;
+    --red-glow: rgba(200,16,46,0.55);
+    --black: #080808;
+    --black-card: #0f0f0f;
+    --black-input: #141414;
+    --white: #F5F5F5;
+    --grey: #888;
+    --border: rgba(200,16,46,0.6);
+    --font: 'Montserrat', sans-serif;
+    --transition: 0.35s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%; height: 100%;
+    font-family: var(--font);
+    background: var(--black);
+    color: var(--white);
+    overflow: hidden;
+  }
+
+  /* ── PAGES ──────────────────────────────── */
+  .page {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    transform: translateX(40px);
+    z-index: 1;
+  }
+  .page.active {
+    opacity: 1; pointer-events: all;
+    transform: translateX(0);
+    z-index: 2;
+  }
+  .page.exit {
+    opacity: 0; transform: translateX(-40px);
+    z-index: 1;
+  }
+
+  /* ── BACKGROUND ──────────────────────────── */
+  .bg {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    z-index: 0;
+  }
+  .bg::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(8,8,8,0.82) 0%, rgba(8,8,8,0.6) 100%);
+  }
+  #p1 .bg { background-image: url('./public/images/signup-page-1.jpg'), linear-gradient(135deg,#1a0008,#080808); }
+  #p2 .bg { background-image: url('./public/images/signup-page-2.jpg'), linear-gradient(135deg,#0a0005,#080808); }
+  #p3 .bg { background-image: url('./public/images/signup-page-3.jpg'), linear-gradient(135deg,#05000a,#080808); }
+
+  /* ── CORNER WORDS ────────────────────────── */
+  .corner-words {
+    position: absolute; bottom: 48px; right: 56px;
+    z-index: 10;
+    text-align: right;
+    line-height: 1;
+    pointer-events: none;
+  }
+  .corner-words span {
+    display: block;
+    font-size: clamp(28px, 3.5vw, 52px);
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.08);
+    text-shadow: 0 0 40px rgba(200,16,46,0.3);
+    transition: color 0.4s;
+  }
+  .corner-words span:hover { color: rgba(200,16,46,0.35); }
+  .corner-words span + span { margin-top: 10px; }
+
+  /* ── FORM CONTAINER ──────────────────────── */
+  .form-wrap {
+    position: relative; z-index: 10;
+    background: var(--black-card);
+    border: 1px solid rgba(200,16,46,0.18);
+    border-radius: 12px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.03), 0 32px 80px rgba(0,0,0,0.85), 0 0 60px rgba(200,16,46,0.08);
+    padding: 44px 48px;
+    width: min(520px, 94vw);
+    max-height: 92vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--red) transparent;
+  }
+  .form-wrap::-webkit-scrollbar { width: 3px; }
+  .form-wrap::-webkit-scrollbar-thumb { background: var(--red); }
+
+  /* ── LOGO ────────────────────────────────── */
+  .logo-block {
+    display: flex; flex-direction: column; align-items: center;
+    margin-bottom: 32px;
+  }
+  .logo-mark {
+    width: 52px; height: 52px;
+    background: var(--red);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .logo-mark::after {
+    content: '';
+    position: absolute; inset: -4px;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    background: transparent;
+    border: 1px solid rgba(200,16,46,0.4);
+  }
+  .logo-mark svg { width: 22px; height: 22px; fill: white; }
+  .logo-text {
+    font-size: 22px; font-weight: 900; letter-spacing: 0.2em;
+    color: var(--white); text-transform: uppercase;
+  }
+  .logo-text span { color: var(--red); }
+  .logo-sub {
+    font-size: 9px; font-weight: 600; letter-spacing: 0.35em;
+    color: var(--grey); text-transform: uppercase; margin-top: 3px;
+  }
+
+  /* ── STEP INDICATOR ──────────────────────── */
+  .step-bar {
+    display: flex; gap: 6px; margin-bottom: 28px;
+    justify-content: center;
+  }
+  .step-dot {
+    height: 3px; flex: 1; max-width: 60px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    transition: background 0.4s;
+  }
+  .step-dot.done { background: var(--red); }
+  .step-dot.active { background: var(--red); box-shadow: 0 0 8px var(--red-glow); }
+
+  /* ── HEADINGS ────────────────────────────── */
+  .form-title {
+    font-size: 24px; font-weight: 900; letter-spacing: 0.05em;
+    text-transform: uppercase; margin-bottom: 4px;
+    line-height: 1.1;
+  }
+  .form-title span { color: var(--red); }
+  .form-sub {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.2em;
+    color: var(--grey); text-transform: uppercase; margin-bottom: 28px;
+  }
+
+  /* ── INPUTS ──────────────────────────────── */
+  .field { margin-bottom: 18px; }
+  label {
+    display: block;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.18em;
+    color: var(--grey); text-transform: uppercase; margin-bottom: 7px;
+  }
+  input[type="text"], input[type="email"], input[type="password"],
+  input[type="number"], input[type="url"], textarea {
+    width: 100%;
+    background: var(--black-input);
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    color: var(--white);
+    font-family: var(--font);
+    font-size: 13px; font-weight: 600;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color var(--transition), box-shadow var(--transition);
+    -webkit-appearance: none;
+  }
+  input:focus, textarea:focus {
+    border-color: var(--red-bright);
+    box-shadow: 0 0 0 3px rgba(200,16,46,0.2), 0 0 20px rgba(200,16,46,0.12);
+  }
+  input.input-error {
+    border-color: #ff4444 !important;
+    box-shadow: 0 0 0 3px rgba(255,68,68,0.15) !important;
+  }
+  input.input-ok {
+    border-color: rgba(50,205,50,0.6) !important;
+  }
+  textarea { resize: vertical; min-height: 90px; }
+  input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.18); font-weight: 400; }
+
+  /* field hint below input */
+  .field-hint {
+    font-size: 9px; font-weight: 600; letter-spacing: 0.12em;
+    color: var(--grey); text-transform: uppercase;
+    margin-top: 5px;
+  }
+  .field-hint.hint-error { color: #ff6666; }
+  .field-hint.hint-ok { color: #50c850; }
+
+  /* password hints */
+  .pw-hints {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-top: 8px;
+  }
+  .pw-hint {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+    padding: 3px 8px; border-radius: 20px;
+    background: rgba(255,255,255,0.05);
+    color: var(--grey);
+    transition: all 0.3s;
+    text-transform: uppercase;
+  }
+  .pw-hint.ok { background: rgba(200,16,46,0.18); color: var(--red-bright); }
+
+  /* ── FILE UPLOAD ─────────────────────────── */
+  .file-upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 22px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative; overflow: hidden;
+  }
+  .file-upload-zone:hover, .file-upload-zone.drag { border-color: var(--red-bright); background: rgba(200,16,46,0.06); }
+  .file-upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .upload-icon { font-size: 28px; margin-bottom: 6px; }
+  .upload-text { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: var(--grey); text-transform: uppercase; }
+  .upload-text span { color: var(--red); }
+  .upload-preview {
+    margin-top: 10px;
+    display: none;
+    align-items: center; gap: 10px;
+  }
+  .upload-preview.show { display: flex; }
+  .upload-preview img {
+    width: 40px; height: 40px;
+    border-radius: 50%; object-fit: cover;
+    border: 2px solid var(--red);
+  }
+  .upload-preview-name { font-size: 11px; color: var(--white); font-weight: 600; }
+
+  /* ── BUTTONS ─────────────────────────────── */
+  .btn-primary {
+    width: 100%; padding: 14px;
+    background: var(--red);
+    color: white; border: none;
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: 12px; font-weight: 800; letter-spacing: 0.25em;
+    text-transform: uppercase; cursor: pointer;
+    transition: all 0.25s;
+    position: relative; overflow: hidden;
+    margin-top: 8px;
+  }
+  .btn-primary::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.5s;
+  }
+  .btn-primary:hover { background: var(--red-bright); box-shadow: 0 0 24px var(--red-glow); }
+  .btn-primary:hover::before { transform: translateX(100%); }
+  .btn-primary:active { transform: scale(0.98); }
+
+  .btn-row { display: flex; gap: 12px; margin-top: 8px; }
+  .btn-back {
+    flex: 0 0 auto;
+    padding: 14px 20px;
+    background: transparent;
+    color: var(--grey); border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: 12px; font-weight: 700; letter-spacing: 0.15em;
+    text-transform: uppercase; cursor: pointer;
+    transition: all 0.25s;
+  }
+  .btn-back:hover { border-color: rgba(255,255,255,0.3); color: var(--white); }
+
+  /* signin link */
+  .signin-link {
+    text-align: center; margin-top: 20px;
+    font-size: 11px; font-weight: 600; color: var(--grey);
+    letter-spacing: 0.05em;
+  }
+  .signin-link a { color: var(--red); text-decoration: none; transition: color 0.2s; }
+  .signin-link a:hover { color: var(--red-bright); }
+
+  /* ── ROLE CARDS ──────────────────────────── */
+  #p2 .form-wrap { width: min(820px, 96vw); }
+  .role-cards {
+    display: flex; gap: 16px;
+    margin: 20px 0;
+  }
+  .role-card {
+    flex: 1;
+    border: 2px solid rgba(200,16,46,0.2);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+    background: rgba(0,0,0,0.5);
+  }
+  .role-card:hover {
+    transform: scale(1.04);
+    border-color: var(--red-bright);
+    box-shadow: 0 0 0 2px var(--red-bright), 0 0 30px var(--red-glow), 0 0 60px rgba(200,16,46,0.2);
+  }
+  .role-card.selected {
+    border-color: var(--red-bright);
+    box-shadow: 0 0 0 2px var(--red-bright), 0 0 30px var(--red-glow);
+  }
+  .role-card img {
+    width: 100%; height: 180px;
+    object-fit: cover;
+    display: block;
+    filter: brightness(0.65) saturate(0.8);
+    transition: filter 0.35s;
+  }
+  .role-card:hover img, .role-card.selected img { filter: brightness(0.9) saturate(1.1); }
+  .role-card-body {
+    padding: 14px 12px;
+    text-align: center;
+  }
+  .role-title {
+    font-size: 13px; font-weight: 900; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--white);
+  }
+  .role-desc {
+    font-size: 10px; font-weight: 600; color: var(--grey);
+    letter-spacing: 0.05em; margin-top: 6px;
+    opacity: 0; transform: translateY(6px);
+    transition: all 0.3s;
+    line-height: 1.5;
+  }
+  .role-card:hover .role-desc { opacity: 1; transform: translateY(0); }
+  .role-check {
+    position: absolute; top: 10px; right: 10px;
+    width: 22px; height: 22px;
+    background: var(--red); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.25s;
+  }
+  .role-card.selected .role-check { opacity: 1; }
+  .role-check svg { width: 12px; height: 12px; stroke: white; stroke-width: 2.5; fill: none; }
+
+  .role-img-placeholder {
+    width: 100%; height: 180px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 44px;
+    background: linear-gradient(135deg, rgba(200,16,46,0.15), rgba(0,0,0,0.5));
+    filter: brightness(0.65);
+    transition: filter 0.35s;
+  }
+  .role-card:hover .role-img-placeholder,
+  .role-card.selected .role-img-placeholder { filter: brightness(1); }
+
+  /* ── CUSTOM MULTISELECT ──────────────────── */
+  .multi-select-wrap { position: relative; }
+  .ms-display {
+    min-height: 46px;
+    background: var(--black-input);
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    transition: border-color var(--transition), box-shadow var(--transition);
+  }
+  .ms-display:hover { border-color: var(--red-bright); }
+  .ms-display.open {
+    border-color: var(--red-bright);
+    box-shadow: 0 0 0 3px rgba(200,16,46,0.2);
+    border-bottom-left-radius: 0; border-bottom-right-radius: 0;
+  }
+  .ms-tag {
+    background: rgba(200,16,46,0.2);
+    border: 1px solid rgba(200,16,46,0.4);
+    color: var(--red-bright);
+    padding: 2px 8px; border-radius: 20px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .ms-tag-remove { cursor: pointer; opacity: 0.6; font-size: 12px; }
+  .ms-tag-remove:hover { opacity: 1; }
+  .ms-placeholder { font-size: 12px; color: rgba(255,255,255,0.18); font-weight: 400; }
+  .ms-dropdown {
+    position: absolute; left: 0; right: 0; top: 100%;
+    background: #111;
+    border: 1.5px solid var(--red-bright);
+    border-top: none;
+    border-bottom-left-radius: 6px; border-bottom-right-radius: 6px;
+    z-index: 100;
+    display: none; overflow: hidden;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.7);
+  }
+  .ms-dropdown.open { display: block; }
+  .ms-option {
+    padding: 10px 14px;
+    font-size: 12px; font-weight: 600; color: var(--white);
+    cursor: pointer; transition: background 0.15s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .ms-option:hover { background: rgba(200,16,46,0.15); }
+  .ms-option.chosen { color: var(--red-bright); }
+  .ms-option::before {
+    content: ''; width: 14px; height: 14px;
+    border: 1.5px solid rgba(255,255,255,0.15);
+    border-radius: 3px; flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .ms-option.chosen::before {
+    background: var(--red); border-color: var(--red);
+  }
+
+  /* ── ROLE PANELS ─────────────────────────── */
+  .role-panel { display: none; }
+  .role-panel.active { display: block; }
+
+  /* ── ERROR MSG ───────────────────────────── */
+  .err-msg {
+    font-size: 10px; font-weight: 700; color: var(--red-bright);
+    letter-spacing: 0.08em; margin-top: 5px; display: none;
+  }
+  .err-msg.show { display: block; }
+
+  /* ── RESPONSIVE ──────────────────────────── */
+  @media (max-width: 640px) {
+    .role-cards { flex-direction: column; }
+    .form-wrap { padding: 30px 22px; }
+    .corner-words { display: none; }
+  }
+
+  /* ── GRID 2-COL ──────────────────────────── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 420px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* ══════════════════════════════════════════
+     CITY SEARCH — NOMINATIM
+  ══════════════════════════════════════════ */
+  .city-search-wrap {
+    position: relative;
+  }
+
+  .city-search-wrap input {
+    padding-right: 40px; /* space for spinner */
+  }
+
+  /* spinner inside the input */
+  .city-spinner {
+    position: absolute;
+    right: 13px; top: 50%;
+    transform: translateY(-50%);
+    width: 16px; height: 16px;
+    border: 2px solid rgba(200,16,46,0.25);
+    border-top-color: var(--red-bright);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+    pointer-events: none;
+  }
+  .city-spinner.active { display: block; }
+  @keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
+
+  /* suggestions panel */
+  .city-suggestions {
+    position: absolute; left: 0; right: 0; top: calc(100% + 4px);
+    background: #0d0d0d;
+    border: 1px solid rgba(200,16,46,0.5);
+    border-radius: 8px;
+    z-index: 200;
+    overflow: hidden;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.85), 0 0 0 1px rgba(200,16,46,0.1), 0 0 30px rgba(200,16,46,0.08);
+    display: none;
+    max-height: 280px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--red) transparent;
+  }
+  .city-suggestions::-webkit-scrollbar { width: 3px; }
+  .city-suggestions::-webkit-scrollbar-thumb { background: var(--red); }
+  .city-suggestions.open { display: block; animation: sugg-in 0.2s ease; }
+
+  @keyframes sugg-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* header bar inside suggestions */
+  .sugg-header {
+    padding: 8px 14px 6px;
+    display: flex; align-items: center; gap: 7px;
+    border-bottom: 1px solid rgba(200,16,46,0.12);
+  }
+  .sugg-header-label {
+    font-size: 8px; font-weight: 800; letter-spacing: 0.25em;
+    color: var(--red); text-transform: uppercase;
+  }
+  .sugg-header-line {
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, rgba(200,16,46,0.4), transparent);
+  }
+  .sugg-osm-badge {
+    font-size: 7px; font-weight: 700; letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.2); text-transform: uppercase;
+  }
+
+  /* individual suggestion item */
+  .sugg-item {
+    padding: 11px 14px;
+    cursor: pointer;
+    display: flex; align-items: flex-start; gap: 11px;
+    transition: background 0.15s;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    position: relative;
+  }
+  .sugg-item:last-child { border-bottom: none; }
+  .sugg-item:hover { background: rgba(200,16,46,0.1); }
+  .sugg-item:hover .sugg-pin { color: var(--red-bright); }
+  .sugg-item:hover .sugg-city { color: var(--white); }
+
+  /* left red accent bar */
+  .sugg-item::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--red);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .sugg-item:hover::before { opacity: 1; }
+
+  /* pin icon */
+  .sugg-pin {
+    color: rgba(200,16,46,0.6);
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    transition: color 0.15s;
+  }
+
+  .sugg-text { flex: 1; min-width: 0; }
+
+  /* city name — first part of display_name */
+  .sugg-city {
+    font-size: 12px; font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    letter-spacing: 0.04em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    transition: color 0.15s;
+  }
+
+  /* state / country breadcrumb */
+  .sugg-breadcrumb {
+    font-size: 9px; font-weight: 600; letter-spacing: 0.1em;
+    color: var(--grey); text-transform: uppercase;
+    margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* coords badge */
+  .sugg-coords {
+    font-size: 8px; font-weight: 700; letter-spacing: 0.05em;
+    color: rgba(200,16,46,0.45);
+    white-space: nowrap;
+    flex-shrink: 0;
+    align-self: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* no results */
+  .sugg-empty {
+    padding: 18px 14px;
+    text-align: center;
+    font-size: 11px; font-weight: 600; color: var(--grey);
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+
+  /* selected city pill — shown below input after pick */
+  .city-selected-pill {
+    display: none;
+    align-items: center; gap: 8px;
+    margin-top: 8px;
+    padding: 7px 12px;
+    background: rgba(200,16,46,0.1);
+    border: 1px solid rgba(200,16,46,0.3);
+    border-radius: 6px;
+    animation: pill-in 0.25s ease;
+  }
+  .city-selected-pill.show { display: flex; }
+  @keyframes pill-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .pill-pin { font-size: 13px; }
+  .pill-text { flex: 1; min-width: 0; }
+  .pill-name {
+    font-size: 11px; font-weight: 700; color: var(--white);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .pill-coords {
+    font-size: 8px; font-weight: 600; letter-spacing: 0.06em;
+    color: rgba(200,16,46,0.7);
+    margin-top: 1px;
+  }
+  .pill-clear {
+    font-size: 15px; color: var(--grey);
+    cursor: pointer; line-height: 1;
+    transition: color 0.15s;
+    flex-shrink: 0;
+  }
+  .pill-clear:hover { color: var(--red-bright); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     PAGE 1 — CREDENTIALS
+═══════════════════════════════════════════ -->
+<div class="page active" id="p1">
+  <div class="bg"></div>
+
+  <div class="corner-words">
+    <span>RIDE</span>
+    <span>ORGANIZE</span>
+    <span>ENGAGE</span>
+  </div>
+
+  <div class="form-wrap">
+    <div class="logo-block">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24"><path d="M12 2L3 7v10l9 5 9-5V7L12 2zm0 2.5l6.5 3.6v7.8L12 19.5l-6.5-3.6V8.1L12 4.5z"/></svg>
+      </div>
+      <div class="logo-text">Ride<span>Sync</span></div>
+      <div class="logo-sub">Ride together. Rise together.</div>
+    </div>
+
+    <div class="step-bar">
+      <div class="step-dot active" id="sd1"></div>
+      <div class="step-dot" id="sd2"></div>
+      <div class="step-dot" id="sd3"></div>
+    </div>
+
+    <div class="form-title">Create your<br/><span>Account</span></div>
+    <div class="form-sub">Step 1 — Credentials</div>
+
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="f1-username" placeholder="e.g. ghost_rider_92" autocomplete="off"/>
+      <div class="field-hint" id="username-hint">No spaces — use underscores or hyphens instead</div>
+    </div>
+
+    <div class="field">
+      <label>Email Address</label>
+      <input type="email" id="f1-email" placeholder="you@domain.com" autocomplete="off"/>
+      <div class="field-hint" id="email-hint"></div>
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="f1-password" placeholder="Create a strong password" autocomplete="new-password"/>
+      <div class="pw-hints">
+        <div class="pw-hint" id="ph-len">8–32 chars</div>
+        <div class="pw-hint" id="ph-upper">Uppercase</div>
+        <div class="pw-hint" id="ph-special">Special char</div>
+        <div class="pw-hint" id="ph-alnum">Alphanumeric</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Profile Picture</label>
+      <div class="file-upload-zone" id="pfp-zone">
+        <input type="file" id="f1-pfp" accept="image/*"/>
+        <div class="upload-icon">📸</div>
+        <div class="upload-text">Drop image here or <span>Browse</span></div>
+        <div style="font-size:9px;color:var(--grey);margin-top:4px;letter-spacing:0.1em;text-transform:uppercase;">JPG / PNG / WEBP · Max 2MB</div>
+        <div class="upload-preview" id="pfp-preview">
+          <img id="pfp-thumb" src="" alt=""/>
+          <span class="upload-preview-name" id="pfp-name"></span>
+        </div>
+      </div>
+      <div class="err-msg" id="pfp-err">File exceeds 2MB limit.</div>
+    </div>
+
+    <div class="err-msg" id="p1-err">Please fill all required fields correctly.</div>
+    <button class="btn-primary" onclick="goTo2()">Continue →</button>
+    <div class="signin-link">Already have an account? <a href="new_login.html">Sign in</a></div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     PAGE 2 — ROLE SELECTION
+═══════════════════════════════════════════ -->
+<div class="page" id="p2">
+  <div class="bg"></div>
+  <div class="form-wrap">
+    <div class="logo-block">
+      <div class="logo-text">Ride<span style="color:var(--red)">Sync</span></div>
+    </div>
+
+    <div class="step-bar">
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+    </div>
+
+    <div class="form-title">Choose your<br/><span>Role</span></div>
+    <div class="form-sub">Step 2 — Who are you?</div>
+
+    <div class="role-cards">
+
+      <div class="role-card" data-role="rider" onclick="selectRole(this)">
+        <div class="role-check">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <img src="./public/images/rider-card-image.jpg" alt="Rider"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+        <div class="role-img-placeholder" style="display:none">🏍️</div>
+        <div class="role-card-body">
+          <div class="role-title">Rider</div>
+          <div class="role-desc">You're the engine. Join rides, explore routes, and connect with your tribe.</div>
+        </div>
+      </div>
+
+      <div class="role-card" data-role="organizer" onclick="selectRole(this)">
+        <div class="role-check">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <img src="./public/images/organzier-card-image.jpg" alt="Organizer"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+        <div class="role-img-placeholder" style="display:none">📋</div>
+        <div class="role-card-body">
+          <div class="role-title">Organizer</div>
+          <div class="role-desc">You build the roads others ride. Plan events and lead your community.</div>
+        </div>
+      </div>
+
+      <div class="role-card" data-role="sponsor" onclick="selectRole(this)">
+        <div class="role-check">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <img src="./public/images/sponsor-card-image.jpg" alt="Sponsor"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+        <div class="role-img-placeholder" style="display:none">💼</div>
+        <div class="role-card-body">
+          <div class="role-title">Sponsor</div>
+          <div class="role-desc">Power the brotherhood. Fuel events and get your brand in front of riders.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="err-msg show" id="p2-err" style="display:none">Please select a role to continue.</div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="goTo1()">← Back</button>
+      <button class="btn-primary" style="flex:1;margin-top:0" onclick="goTo3()">Continue →</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     PAGE 3 — ROLE DETAILS
+═══════════════════════════════════════════ -->
+<div class="page" id="p3">
+  <div class="bg"></div>
+  <div class="form-wrap">
+    <div class="logo-block" style="margin-bottom:16px">
+      <div class="logo-text">Ride<span style="color:var(--red)">Sync</span></div>
+    </div>
+
+    <div class="step-bar">
+      <div class="step-dot done"></div>
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+    </div>
+
+    <div class="form-title" id="p3-title">Almost<br/><span>There</span></div>
+    <div class="form-sub" id="p3-sub">Step 3 — Your Details</div>
+
+    <!-- ── RIDER ── -->
+    <div class="role-panel" id="panel-rider">
+      <div class="grid-2">
+        <div class="field">
+          <label>Full Name</label>
+          <input type="text" id="r-name" placeholder="Your name"/>
+        </div>
+        <div class="field">
+          <label>Age</label>
+          <input type="number" id="r-age" placeholder="25" min="16" max="99"/>
+        </div>
+      </div>
+
+      <!-- CITY SEARCH -->
+      <div class="field">
+        <label>City</label>
+        <div class="city-search-wrap">
+          <input
+            type="text"
+            id="r-city-input"
+            placeholder="Start typing your city…"
+            autocomplete="off"
+            oninput="onCityInput()"
+          />
+          <div class="city-spinner" id="city-spinner"></div>
+
+          <!-- suggestions dropdown -->
+          <div class="city-suggestions" id="city-suggestions">
+            <div class="sugg-header">
+              <span class="sugg-header-label">Locations</span>
+              <div class="sugg-header-line"></div>
+              <span class="sugg-osm-badge">via OpenStreetMap</span>
+            </div>
+            <div id="sugg-list"></div>
+          </div>
+        </div>
+
+        <!-- selected pill -->
+        <div class="city-selected-pill" id="city-pill">
+          <span class="pill-pin">📍</span>
+          <div class="pill-text">
+            <div class="pill-name" id="pill-name"></div>
+            <div class="pill-coords" id="pill-coords"></div>
+          </div>
+          <span class="pill-clear" onclick="clearCity()" title="Clear">×</span>
+        </div>
+
+        <!-- hidden fields -->
+        <input type="hidden" id="r-display-name"/>
+        <input type="hidden" id="r-lat"/>
+        <input type="hidden" id="r-lng"/>
+      </div>
+
+      <div class="field">
+        <label>Bike Brand(s)</label>
+        <div class="multi-select-wrap">
+          <div class="ms-display" id="bike-display" onclick="toggleMs('bike')">
+            <span class="ms-placeholder" id="bike-ph">Select your machines</span>
+          </div>
+          <div class="ms-dropdown" id="bike-dropdown">
+            <div class="ms-option" onclick="pickMs('bike','Royal Enfield')">Royal Enfield</div>
+            <div class="ms-option" onclick="pickMs('bike','Harley-Davidson')">Harley-Davidson</div>
+            <div class="ms-option" onclick="pickMs('bike','Triumph')">Triumph</div>
+            <div class="ms-option" onclick="pickMs('bike','Honda')">Honda</div>
+            <div class="ms-option" onclick="pickMs('bike','KTM')">KTM</div>
+            <div class="ms-option" onclick="pickMs('bike','Yamaha')">Yamaha</div>
+            <div class="ms-option" onclick="pickMs('bike','Bajaj')">Bajaj</div>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Riding Style(s)</label>
+        <div class="multi-select-wrap">
+          <div class="ms-display" id="style-display" onclick="toggleMs('style')">
+            <span class="ms-placeholder" id="style-ph">Select your riding style</span>
+          </div>
+          <div class="ms-dropdown" id="style-dropdown">
+            <div class="ms-option" onclick="pickMs('style','Offroad')">Offroad</div>
+            <div class="ms-option" onclick="pickMs('style','Highway')">Highway</div>
+            <div class="ms-option" onclick="pickMs('style','Adventure')">Adventure</div>
+            <div class="ms-option" onclick="pickMs('style','City')">City</div>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Bio <span style="color:var(--grey);font-weight:400;text-transform:none;letter-spacing:0">(max 250 words)</span></label>
+        <textarea id="r-bio" placeholder="Tell the brotherhood about yourself..."></textarea>
+        <div style="font-size:9px;color:var(--grey);text-align:right;margin-top:3px" id="bio-count">0 / 250 words</div>
+      </div>
+    </div>
+
+    <!-- ── ORGANIZER ── -->
+    <div class="role-panel" id="panel-organizer">
+      <div class="field">
+        <label>Organization / Club Name</label>
+        <input type="text" id="o-name" placeholder="e.g. Iron Wolves MC"/>
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <textarea id="o-description" placeholder="What's your club about?"></textarea>
+      </div>
+      <div class="field">
+        <label>Social Link <span style="color:var(--grey);font-weight:400;text-transform:none;letter-spacing:0">(optional — WhatsApp / Telegram)</span></label>
+        <input type="url" id="o-social" placeholder="https://t.me/yourclub"/>
+      </div>
+      <div class="field">
+        <label>Website <span style="color:var(--grey);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+        <input type="url" id="o-website" placeholder="https://yourclub.com"/>
+      </div>
+      <div class="field">
+        <label>GSTIN</label>
+        <input type="text" id="o-gstin" placeholder="22AAAAA0000A1Z5" style="text-transform:uppercase"/>
+      </div>
+    </div>
+
+    <!-- ── SPONSOR ── -->
+    <div class="role-panel" id="panel-sponsor">
+      <div class="field">
+        <label>Brand Name</label>
+        <input type="text" id="s-brandname" placeholder="Your brand / company name"/>
+      </div>
+      <div class="field">
+        <label>Banner Image</label>
+        <div class="file-upload-zone" id="banner-zone">
+          <input type="file" id="s-banner" accept="image/*"/>
+          <div class="upload-icon">🖼️</div>
+          <div class="upload-text">Upload your banner — <span>Browse</span></div>
+          <div style="font-size:9px;color:var(--grey);margin-top:4px;letter-spacing:0.1em;text-transform:uppercase;">Recommended: 1200×400px</div>
+          <div class="upload-preview" id="banner-preview">
+            <img id="banner-thumb" src="" alt="" style="width:60px;height:30px;border-radius:4px;object-fit:cover"/>
+            <span class="upload-preview-name" id="banner-name"></span>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Website</label>
+        <input type="url" id="s-website" placeholder="https://yourbrand.com"/>
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <textarea id="s-description" placeholder="What does your brand offer riders?"></textarea>
+      </div>
+    </div>
+
+    <div class="err-msg" id="p3-err">Please fill all required fields.</div>
+    <div class="btn-row" style="margin-top:16px">
+      <button class="btn-back" onclick="goBackToP2()">← Back</button>
+      <button class="btn-primary" style="flex:1;margin-top:0" onclick="submitForm()">Join the Brotherhood →</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* ── STATE ─────────────────────────────────── */
+const state = {
+  username: '', email: '', password: '', pfp: null,
+  role: '',
+  bike: [], ridingstyle: []
+};
+
+/* ── PAGE NAV ──────────────────────────────── */
+function showPage(from, to) {
+  const pFrom = document.getElementById(from);
+  const pTo   = document.getElementById(to);
+  pFrom.classList.add('exit');
+  setTimeout(() => {
+    pFrom.classList.remove('active','exit');
+    pTo.classList.add('active');
+  }, 480);
+}
+
+function goTo2() {
+  const uEl  = document.getElementById('f1-username');
+  const eEl  = document.getElementById('f1-email');
+  const u    = uEl.value.trim();
+  const e    = eEl.value.trim();
+  const p    = document.getElementById('f1-password').value;
+  const err  = document.getElementById('p1-err');
+
+  // username: no spaces
+  if (!u || /\s/.test(u)) {
+    err.textContent = 'Username cannot contain spaces.';
+    err.classList.add('show');
+    uEl.classList.add('input-error');
+    return;
+  }
+  uEl.classList.remove('input-error');
+
+  // email: valid format
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+  if (!emailOk) {
+    err.textContent = 'Please enter a valid email address.';
+    err.classList.add('show');
+    eEl.classList.add('input-error');
+    return;
+  }
+  eEl.classList.remove('input-error');
+
+  // password
+  const pwOk = validatePassword(p);
+  if (!pwOk) {
+    err.textContent = 'Password does not meet all requirements.';
+    err.classList.add('show');
+    return;
+  }
+
+  err.classList.remove('show');
+  state.username = u; state.email = e; state.password = p;
+  showPage('p1','p2');
+}
+
+function goTo3() {
+  const err = document.getElementById('p2-err');
+  if (!state.role) { err.style.display='block'; return; }
+  err.style.display='none';
+  document.querySelectorAll('.role-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + state.role).classList.add('active');
+  const titles = {
+    rider:'Your Ride<br/><span>Profile</span>',
+    organizer:'Your Club<br/><span>Profile</span>',
+    sponsor:'Your Brand<br/><span>Profile</span>'
+  };
+  document.getElementById('p3-title').innerHTML = titles[state.role];
+  showPage('p2','p3');
+}
+
+function goTo1() { showPage('p2','p1'); }
+function goBackToP2() { showPage('p3','p2'); }
+
+/* ── PASSWORD VALIDATION ───────────────────── */
+function validatePassword(p) {
+  return p.length >= 8 && p.length <= 32
+      && /[A-Z]/.test(p)
+      && /[^a-zA-Z0-9]/.test(p)
+      && /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]+$/.test(p);
+}
+
+document.getElementById('f1-password').addEventListener('input', function(){
+  const p = this.value;
+  toggle('ph-len',     p.length >= 8 && p.length <= 32);
+  toggle('ph-upper',   /[A-Z]/.test(p));
+  toggle('ph-special', /[^a-zA-Z0-9]/.test(p));
+  toggle('ph-alnum',   /[a-zA-Z0-9]/.test(p));
+});
+function toggle(id, ok) {
+  document.getElementById(id).classList.toggle('ok', ok);
+}
+
+/* ── USERNAME — live validation ────────────── */
+document.getElementById('f1-username').addEventListener('input', function(){
+  const hint = document.getElementById('username-hint');
+  const val  = this.value;
+  if (!val) {
+    hint.textContent = 'No spaces — use underscores or hyphens instead';
+    hint.className   = 'field-hint';
+    this.classList.remove('input-error','input-ok');
+    return;
+  }
+  if (/\s/.test(val)) {
+    hint.textContent = '✕ Spaces are not allowed';
+    hint.className   = 'field-hint hint-error';
+    this.classList.add('input-error');
+    this.classList.remove('input-ok');
+  } else {
+    hint.textContent = '✓ Looks good';
+    hint.className   = 'field-hint hint-ok';
+    this.classList.remove('input-error');
+    this.classList.add('input-ok');
+  }
+});
+
+/* ── EMAIL — live validation ───────────────── */
+document.getElementById('f1-email').addEventListener('input', function(){
+  const hint = document.getElementById('email-hint');
+  const val  = this.value.trim();
+  if (!val) {
+    hint.textContent = '';
+    hint.className   = 'field-hint';
+    this.classList.remove('input-error','input-ok');
+    return;
+  }
+  const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+  if (ok) {
+    hint.textContent = '✓ Valid email';
+    hint.className   = 'field-hint hint-ok';
+    this.classList.remove('input-error');
+    this.classList.add('input-ok');
+  } else {
+    hint.textContent = '✕ Enter a valid email (e.g. you@domain.com)';
+    hint.className   = 'field-hint hint-error';
+    this.classList.add('input-error');
+    this.classList.remove('input-ok');
+  }
+});
+
+/* ── FILE UPLOAD ───────────────────────────── */
+document.getElementById('f1-pfp').addEventListener('change', function(){
+  const file = this.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) {
+    document.getElementById('pfp-err').classList.add('show'); return;
+  }
+  document.getElementById('pfp-err').classList.remove('show');
+  state.pfp = file;
+  const r = new FileReader();
+  r.onload = e => {
+    document.getElementById('pfp-thumb').src = e.target.result;
+    document.getElementById('pfp-name').textContent = file.name;
+    document.getElementById('pfp-preview').classList.add('show');
+  };
+  r.readAsDataURL(file);
+});
+
+document.getElementById('s-banner').addEventListener('change', function(){
+  const file = this.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    document.getElementById('banner-thumb').src = e.target.result;
+    document.getElementById('banner-name').textContent = file.name;
+    document.getElementById('banner-preview').classList.add('show');
+  };
+  r.readAsDataURL(file);
+});
+
+['pfp-zone','banner-zone'].forEach(id => {
+  const z = document.getElementById(id);
+  if (!z) return;
+  z.addEventListener('dragover', e => { e.preventDefault(); z.classList.add('drag'); });
+  z.addEventListener('dragleave', () => z.classList.remove('drag'));
+  z.addEventListener('drop', e => { e.preventDefault(); z.classList.remove('drag'); });
+});
+
+/* ── ROLE SELECTION ────────────────────────── */
+function selectRole(card) {
+  document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  state.role = card.dataset.role;
+  document.getElementById('p2-err').style.display = 'none';
+}
+
+/* ── MULTI-SELECT ──────────────────────────── */
+const msState = { bike: [], style: [] };
+
+function toggleMs(key) {
+  const dd   = document.getElementById(key+'-dropdown');
+  const disp = document.getElementById(key+'-display');
+  dd.classList.toggle('open');
+  disp.classList.toggle('open');
+}
+
+function pickMs(key, val) {
+  const arr = msState[key];
+  const idx = arr.indexOf(val);
+  if (idx > -1) arr.splice(idx, 1);
+  else arr.push(val);
+  renderTags(key);
+  document.querySelectorAll(`#${key}-dropdown .ms-option`).forEach(o => {
+    o.classList.toggle('chosen', arr.includes(o.textContent.trim()));
+  });
+}
+
+function renderTags(key) {
+  const disp = document.getElementById(key+'-display');
+  const ph   = document.getElementById(key+'-ph');
+  const arr  = msState[key];
+  disp.querySelectorAll('.ms-tag').forEach(t => t.remove());
+  if (arr.length === 0) { ph.style.display = 'inline'; return; }
+  ph.style.display = 'none';
+  arr.forEach(v => {
+    const tag = document.createElement('div');
+    tag.className = 'ms-tag';
+    tag.innerHTML = `${v}<span class="ms-tag-remove" onclick="removeTag('${key}','${v}',event)">×</span>`;
+    disp.appendChild(tag);
+  });
+}
+
+function removeTag(key, val, e) {
+  e.stopPropagation();
+  const idx = msState[key].indexOf(val);
+  if (idx > -1) msState[key].splice(idx, 1);
+  renderTags(key);
+  document.querySelectorAll(`#${key}-dropdown .ms-option`).forEach(o => {
+    o.classList.toggle('chosen', msState[key].includes(o.textContent.trim()));
+  });
+}
+
+document.addEventListener('click', e => {
+  ['bike','style'].forEach(key => {
+    const disp = document.getElementById(key+'-display');
+    const dd   = document.getElementById(key+'-dropdown');
+    if (disp && !disp.contains(e.target) && dd && !dd.contains(e.target)) {
+      dd.classList.remove('open'); disp.classList.remove('open');
+    }
+  });
+  // close city suggestions on outside click
+  const cityWrap = document.querySelector('.city-search-wrap');
+  const sugg     = document.getElementById('city-suggestions');
+  if (cityWrap && sugg && !cityWrap.contains(e.target)) {
+    sugg.classList.remove('open');
+  }
+});
+
+/* bio word count */
+document.getElementById('r-bio')?.addEventListener('input', function(){
+  const words = this.value.trim().split(/\s+/).filter(Boolean).length;
+  document.getElementById('bio-count').textContent = `${Math.min(words,250)} / 250 words`;
+  if (words > 250) this.value = this.value.trim().split(/\s+/).slice(0,250).join(' ');
+});
+
+/* ══════════════════════════════════════════
+   CITY SEARCH — NOMINATIM
+══════════════════════════════════════════ */
+let cityDebounceTimer = null;
+let cityChosen = false; // true once user picks from dropdown
+
+function onCityInput() {
+  const val = document.getElementById('r-city-input').value.trim();
+
+  // if user types after a pick, reset the pick
+  if (cityChosen) {
+    cityChosen = false;
+    clearCityHidden();
+    document.getElementById('city-pill').classList.remove('show');
+  }
+
+  clearTimeout(cityDebounceTimer);
+
+  if (val.length < 2) {
+    closeSuggestions();
+    return;
+  }
+
+  cityDebounceTimer = setTimeout(() => fetchCities(val), 380);
+}
+
+async function fetchCities(query) {
+  const spinner = document.getElementById('city-spinner');
+  spinner.classList.add('active');
+
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=6&addressdetails=1`;
+    const res  = await fetch(url, {
+      headers: { 'Accept-Language': 'en', 'User-Agent': 'RideSyncApp/1.0' }
+    });
+    const data = await res.json();
+    renderSuggestions(data);
+  } catch (err) {
+    renderSuggestions([]);
+  } finally {
+    spinner.classList.remove('active');
+  }
+}
+
+function renderSuggestions(results) {
+  const list = document.getElementById('sugg-list');
+  const sugg = document.getElementById('city-suggestions');
+
+  list.innerHTML = '';
+
+  if (!results.length) {
+    list.innerHTML = '<div class="sugg-empty">No locations found</div>';
+    sugg.classList.add('open');
+    return;
+  }
+
+  results.forEach(r => {
+    const addr = r.address || {};
+
+    // city label — most specific non-empty part
+    const cityLabel =
+      addr.city || addr.town || addr.village ||
+      addr.county || addr.state_district || r.display_name.split(',')[0];
+
+    // breadcrumb — state + country
+    const parts = [];
+    if (addr.state)   parts.push(addr.state);
+    if (addr.country) parts.push(addr.country);
+    const breadcrumb = parts.join(', ');
+
+    // rounded coords
+    const latR = parseFloat(r.lat).toFixed(4);
+    const lonR = parseFloat(r.lon).toFixed(4);
+
+    const item = document.createElement('div');
+    item.className = 'sugg-item';
+    item.innerHTML = `
+      <span class="sugg-pin">📍</span>
+      <div class="sugg-text">
+        <div class="sugg-city">${cityLabel}</div>
+        ${breadcrumb ? `<div class="sugg-breadcrumb">${breadcrumb}</div>` : ''}
+      </div>
+      <div class="sugg-coords">${latR}, ${lonR}</div>
+    `;
+
+    item.addEventListener('click', () => pickCity(r, cityLabel, breadcrumb));
+    list.appendChild(item);
+  });
+
+  sugg.classList.add('open');
+}
+
+function pickCity(result, cityLabel, breadcrumb) {
+  cityChosen = true;
+
+  const display_name = result.display_name;
+  const lat          = result.lat;
+  const lng          = result.lon;   // Nominatim uses .lon
+
+  // fill hidden fields
+  document.getElementById('r-display-name').value = display_name;
+  document.getElementById('r-lat').value           = lat;
+  document.getElementById('r-lng').value           = lng;
+
+  // set visible input to city label + breadcrumb
+  const shortLabel = breadcrumb ? `${cityLabel}, ${breadcrumb}` : cityLabel;
+  document.getElementById('r-city-input').value = shortLabel;
+
+  // show pill
+  document.getElementById('pill-name').textContent   = shortLabel;
+  document.getElementById('pill-coords').textContent =
+    `${parseFloat(lat).toFixed(5)}, ${parseFloat(lng).toFixed(5)}`;
+  document.getElementById('city-pill').classList.add('show');
+
+  closeSuggestions();
+}
+
+function clearCity() {
+  cityChosen = false;
+  document.getElementById('r-city-input').value = '';
+  clearCityHidden();
+  document.getElementById('city-pill').classList.remove('show');
+  document.getElementById('r-city-input').focus();
+}
+
+function clearCityHidden() {
+  document.getElementById('r-display-name').value = '';
+  document.getElementById('r-lat').value           = '';
+  document.getElementById('r-lng').value           = '';
+}
+
+function closeSuggestions() {
+  document.getElementById('city-suggestions').classList.remove('open');
+}
+
+/* ── SUBMIT ────────────────────────────────── */
+function submitForm() {
+  const err = document.getElementById('p3-err');
+  const fd  = new FormData();
+
+  fd.append('username', state.username);
+  fd.append('email',    state.email);
+  fd.append('password', state.password);
+  if (state.pfp) fd.append('pfp', state.pfp);
+  fd.append('role', state.role);
+
+  if (state.role === 'rider') {
+    const name         = document.getElementById('r-name').value.trim();
+    const age          = document.getElementById('r-age').value.trim();
+    const display_name = document.getElementById('r-display-name').value;
+    const lat          = document.getElementById('r-lat').value;
+    const lng          = document.getElementById('r-lng').value;
+    const bio          = document.getElementById('r-bio').value.trim();
+
+    if (!name || !age) {
+      err.textContent = 'Please fill in your name and age.';
+      err.classList.add('show'); return;
+    }
+
+    if (!display_name || !lat || !lng) {
+      err.textContent = 'Please select a city from the suggestions.';
+      err.classList.add('show'); return;
+    }
+
+    const parsedLat = parseFloat(lat);
+    const parsedLng = parseFloat(lng);
+    if (isNaN(parsedLat) || isNaN(parsedLng)) {
+      err.textContent = 'Invalid city location. Please search again.';
+      err.classList.add('show'); return;
+    }
+
+    fd.append('name',         name);
+    fd.append('age',          age);
+    fd.append('display_name', display_name);
+    fd.append('lat',          parsedLat);
+    fd.append('lng',          parsedLng);
+    fd.append('bio',          bio);
+    msState.bike.forEach(v  => fd.append('bikes', v));
+    msState.style.forEach(v => fd.append('ridingStyle', v));
+
+  } else if (state.role === 'organizer') {
+    const name  = document.getElementById('o-name').value.trim();
+    const desc  = document.getElementById('o-description').value.trim();
+    const gstin = document.getElementById('o-gstin').value.trim();
+    if (!name || !desc || !gstin) { err.classList.add('show'); return; }
+    fd.append('name',        name);
+    fd.append('description', desc);
+    fd.append('sociallinks', document.getElementById('o-social').value.trim());
+    fd.append('website',     document.getElementById('o-website').value.trim());
+    fd.append('gstin',       gstin);
+
+  } else if (state.role === 'sponsor') {
+    const brand  = document.getElementById('s-brandname').value.trim();
+    const desc   = document.getElementById('s-description').value.trim();
+    const web    = document.getElementById('s-website').value.trim();
+    const banner = document.getElementById('s-banner').files[0];
+    if (!brand || !desc || !web) { err.classList.add('show'); return; }
+    fd.append('brandname',   brand);
+    fd.append('description', desc);
+    fd.append('website',     web);
+    if (banner) fd.append('banner', banner);
+  }
+
+  err.classList.remove('show');
+
+  const submitBtn = document.querySelector('#p3 .btn-primary');
+  submitBtn.disabled    = true;
+  submitBtn.textContent = 'Submitting...';
+
+  fetch('http://localhost:3000/auth/signup', {
+    method: 'POST',
+    body: fd
+  })
+  .then(res => res.json())
+  .then(data => {
+
+    localStorage.setItem('username', data.data.username);
+    localStorage.setItem('pfp',      data.data.pfp || '');
+    localStorage.setItem('email',    data.data.email || '');
+    localStorage.setItem('role',     data.data.role);
+    const role = data?.data?.role;
+    if (role === 'rider')          window.location.href = 'new_rider_dashboard.html';
+    else if (role === 'organizer') window.location.href = 'new_organizer_dashboard.html';
+    else {
+      err.textContent = data?.message || 'Signup failed. Please try again.';
+      err.classList.add('show');
+      submitBtn.disabled    = false;
+      submitBtn.textContent = 'Join the Brotherhood →';
+    }
+  })
+  .catch(() => {
+    err.textContent = 'Could not reach the server. Is it running on port 3000?';
+    err.classList.add('show');
+    submitBtn.disabled    = false;
+    submitBtn.textContent = 'Join the Brotherhood →';
+  });
+}
+</script>
+</body>
+</html>

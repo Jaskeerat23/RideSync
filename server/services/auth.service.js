@@ -7,6 +7,8 @@ const user = require('../models/user.model.js');
 const rider = require('../models/rider.model.js');
 const organizer = require('../models/organizer.model.js');
 const sponsor = require('../models/sponsor.model.js');
+const r2 = require('../config/r2.js');
+const { PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 
 async function connect_to_db() {
     try {
@@ -45,6 +47,7 @@ async function google_sign_in_user(data) {
             username: res.userName,
             email: res.email,
             role: res.role,
+            pfp: res.pfp
         };
 
         return {
@@ -60,7 +63,7 @@ async function google_sign_in_user(data) {
 async function login_user(data) {
     try {
         await connect_to_db();
-        const res = await user.findOne({ userName: data.username }, { _id: 1, userName: 1, password: 1, email: 1, role: 1 });
+        const res = await user.findOne({ userName: data.username }, { _id: 1, userName: 1, password: 1, email: 1, role: 1, pfp: 1 });
 
         if(res === null) {
             return {
@@ -77,7 +80,8 @@ async function login_user(data) {
                     _id: res._id,
                     username: res.userName,
                     email: res.email,
-                    role: res.role
+                    role: res.role,
+                    pfp: res.pfp
                 };
                 return {
                     success: true,
@@ -102,13 +106,23 @@ async function insert_role_based(roleDetails, role, newObjId, session) {
 
         if(role == 'rider') {
 
-            const name = roleDetails.name, age = roleDetails.age, city = roleDetails.city, socialLinks = roleDetails.socialLinks, bikes = roleDetails.bikes, ridingStyle = roleDetails.ridingStyle, bio = roleDetails.bio;
+            const name = roleDetails.name, age = roleDetails.age, city = roleDetails.city, socialLinks = roleDetails.socialLinks
+            const bikes = roleDetails.bikes, ridingStyle = roleDetails.ridingStyle, bio = roleDetails.bio;
+            const display_name = roleDetails.display_name, lat = parseFloat(roleDetails.lat), lng = parseFloat(roleDetails.lng);
+
+            if(!lat || !lng || isNaN(lat) || isNaN(lng)) {
+                throw new Error("No Location Entered");
+            }
 
             const newRider = new rider({
                 userId: newObjId,
                 name: name,
                 age: age,
-                city: city,
+                city: display_name,
+                cityLocation: {
+                    type: 'Point',
+                    coordinates: [lng, lat]
+                },
                 socialLinks: socialLinks,
                 bikes: bikes,
                 ridingStyle: ridingStyle,
@@ -140,47 +154,68 @@ async function insert_role_based(roleDetails, role, newObjId, session) {
     }
 }
 
-async function sign_up_user(data) {
+async function sign_up_user(data, imgFile) {
 
     await connect_to_db();
-
-    console.log(data, "inside ");
-    const username = data.username, email = data.email, pass = data.password, role = data.role;
-    const roleDetails = data.roleDetails;
-
-    if (!['rider', 'organizer', 'sponsor'].includes(role)) {
-        throw new Error("Invalid role");
-    }
-
     const session = await mongoose.startSession();
-    session.startTransaction();
-
-    const hash = await bcrypt.hash(pass, 10);
-
-    let createdAt = new Date().toISOString();
-    let updatedAt = createdAt;
-    
-    const newUser = new user({
-        userName: username,
-        email: email, 
-        password: hash,
-        role: role,
-        createdAt: createdAt,
-        updatedAt: updatedAt
-    });
-
-    let newObjId = null;
-    
+    let r2Uploaded = false;
+    let params = null;
     try {
+
+        console.log(data, "inside ");
+        const username = data.username, email = data.email, pass = data.password, role = data.role;
+
+        if (!['rider', 'organizer', 'sponsor'].includes(role)) {
+            throw new Error("Invalid role");
+        }
+
+        session.startTransaction();
+
+        const hash = await bcrypt.hash(pass, 10);
+
+        let createdAt = new Date().toISOString();
+        let updatedAt = createdAt;
+        
+        const newUser = new user({
+            userName: username,
+            email: email, 
+            password: hash,
+            role: role,
+            createdAt: createdAt,
+            updatedAt: updatedAt
+        });
+    
         const res = await newUser.save({session});
         console.log("user registered");
 
-        newObjId = res._id;
+        const newObjId = res._id;
 
-        await insert_role_based(roleDetails, role, newObjId, session);
+        if(imgFile) {
+            const ext = imgFile.mimetype.split('/')[1]
+
+            params = {
+                Bucket: process.env.R2_BUCKET_NAME,
+                Key: `pfp/${newObjId}.${ext}`,
+                Body: imgFile.buffer,
+                ContentType: imgFile.mimetype
+            };
+            
+            const img_res = await r2.send(new PutObjectCommand(params));
+            r2Uploaded = true;
+
+            const new_res = await user.updateOne(
+                { _id: newObjId },
+                { $set: { pfp: `${process.env.R2_PUBLIC_URL}/pfp/${newObjId}.${ext}` } },
+                { session }
+            );
+        }
+
+        await insert_role_based(data, role, newObjId, session);
 
         await session.commitTransaction();
         session.endSession();
+
+        console.log('returning from service and r2 upload is ', r2Uploaded);
 
         return {
             success: true,
@@ -188,11 +223,13 @@ async function sign_up_user(data) {
                 _id: newObjId,
                 username: username,
                 email: email,
-                role: role
-            }   
+                role: role,
+                pfp: imgFile ? `${process.env.R2_PUBLIC_URL}/pfp/${newObjId}.${imgFile.mimetype.split('/')[1]}` : null
+            }
         };
     }
     catch(err) {
+        if(r2Uploaded) await r2.send(new DeleteObjectCommand(params))
         await session.abortTransaction();
         console.error(err);
         session.endSession();

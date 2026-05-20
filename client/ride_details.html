@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RideSync — Ride Details</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,600;0,700;0,800;0,900;1,900&family=Oswald:wght@300;400;500;600;700&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════
+   TOKENS — identical to new_rider_dashboard
+══════════════════════════════════════ */
+:root {
+  --red:        #e8000d;
+  --red-dark:   #b0000a;
+  --red-glow:   rgba(232,0,13,0.18);
+  --bg:         #0d0d0d;
+  --sidebar-bg: #111111;
+  --card-bg:    #181818;
+  --card-bg-hi: #1c1c1c;
+  --border:     #232323;
+  --border-hi:  #2a2a2a;
+  --text:       #ffffff;
+  --text-dim:   #aaaaaa;
+  --text-muted: #666666;
+  --radius:     14px;
+  --radius-sm:  6px;
+
+  --diff-easy:     #2ecc71;
+  --diff-moderate: #f0b429;
+  --diff-hard:     #e67e22;
+  --diff-extreme:  #e8000d;
+
+  --warn:  #f0b429;
+  --error: #e8000d;
+  --ok:    #2ecc71;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+a { text-decoration:none; color:inherit; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* subtle noise grain — same as dashboard */
+body::after {
+  content:'';
+  position:fixed; inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events:none; z-index:9999; opacity:.5;
+}
+
+/* ══════════════════════════════════════
+   NAVBAR — same grid layout as dashboard
+══════════════════════════════════════ */
+nav {
+  position: sticky; top:0; z-index:100;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  height: 62px;
+  padding: 0 1.8rem;
+  background: rgba(13,13,13,0.96);
+  backdrop-filter: blur(14px);
+  border-bottom: 2px solid var(--red);
+}
+.nav-left   { display:flex; align-items:center; gap:.8rem; }
+.nav-center { display:flex; align-items:center; justify-content:center; }
+.nav-right  { display:flex; align-items:center; justify-content:flex-end; gap:1rem; }
+
+.nav-back {
+  display: flex; align-items: center; gap:.45rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: .42rem .9rem;
+  color: var(--text-dim);
+  font-family:'Montserrat',sans-serif;
+  font-size:.7rem; font-weight:800;
+  letter-spacing:.16em; text-transform:uppercase;
+  cursor:pointer;
+  transition: color .2s, border-color .2s, background .2s;
+}
+.nav-back:hover {
+  color: var(--text); border-color: var(--red); background: rgba(232,0,13,.06);
+}
+.nav-back svg { transition: transform .2s; }
+.nav-back:hover svg { transform: translateX(-3px); }
+
+.nav-logo-img  { height: 30px; width:auto; object-fit:contain; }
+.nav-logo-text {
+  font-family:'Montserrat',sans-serif;
+  font-size:1.5rem; font-weight:900;
+  letter-spacing:.12em;
+  color: var(--red);
+}
+
+.nav-about {
+  font-family:'Barlow',sans-serif;
+  font-size:.82rem; letter-spacing:.06em;
+  color: var(--text-dim);
+  transition: color .2s;
+}
+.nav-about:hover { color: var(--text); }
+
+.pfp-wrap {
+  width:38px; height:38px;
+  border-radius:50%;
+  border:2px solid var(--red);
+  overflow:hidden; cursor:pointer;
+  transition: box-shadow .2s;
+  flex-shrink:0;
+}
+.pfp-wrap:hover { box-shadow:0 0 16px var(--red-glow); }
+.pfp-wrap img   { width:100%; height:100%; object-fit:cover; }
+.pfp-placeholder {
+  width:100%; height:100%;
+  background:#1e1e1e;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Montserrat',sans-serif;
+  font-weight:800; font-size:.85rem;
+  color:var(--red);
+}
+
+/* ══════════════════════════════════════
+   MAIN
+══════════════════════════════════════ */
+main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 2.4rem 2.4rem 6rem;
+}
+
+.role-tag-row {
+  display:flex; align-items:center; gap:.8rem;
+  margin-bottom: 1.2rem;
+}
+.role-tag {
+  font-family:'Montserrat',sans-serif;
+  font-size:.6rem; font-weight:800;
+  letter-spacing:.18em; text-transform:uppercase;
+  padding:.28rem .8rem;
+  background: var(--red-glow);
+  border: 1.5px solid var(--red);
+  color: var(--red);
+  border-radius: 4px;
+}
+
+/* ══════════════════════════════════════
+   HERO BANNER CARD
+══════════════════════════════════════ */
+.ride-hero {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1.5px solid var(--border);
+  background: var(--card-bg);
+  margin-bottom: 1.6rem;
+  min-height: 360px;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  animation: fade-in .4s ease both;
+}
+
+.hero-bg {
+  position:absolute; inset:0;
+  background: linear-gradient(145deg, #1c1c1c, #0d0d0d);
+  background-size: cover; background-position: center;
+}
+.hero-bg.has-image { /* ride.banner is set inline */ }
+
+.hero-vignette {
+  position:absolute; inset:0;
+  background: linear-gradient(to top, rgba(0,0,0,.92) 0%, rgba(0,0,0,.55) 45%, rgba(0,0,0,.15) 100%);
+  pointer-events:none;
+}
+
+.hero-chips {
+  position: absolute; top: 18px; left: 18px; right: 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: .5rem;
+  z-index: 2;
+}
+.chip {
+  font-family:'Montserrat',sans-serif;
+  font-size:.58rem; font-weight:800;
+  letter-spacing:.16em; text-transform:uppercase;
+  padding:.28rem .7rem;
+  border-radius:4px;
+  display: inline-flex; align-items: center; gap: .35rem;
+}
+.chip.type     { background: var(--red); color:#fff; }
+.chip.spots    { background: rgba(13,13,13,.85); border:1px solid var(--red); color: var(--red); }
+.chip.spots.full { background: rgba(232,0,13,.95); color:#fff; border-color: var(--red); }
+.chip.status   { background: rgba(13,13,13,.85); border:1px solid var(--border); color: var(--text-dim); }
+.chip.status-upcoming  { color: var(--ok); border-color: var(--ok); }
+.chip.status-ongoing   { color: var(--warn); border-color: var(--warn); }
+.chip.status-cancelled { color: var(--error); border-color: var(--error); }
+.chip.status-completed { color: var(--text-muted); border-color: var(--text-muted); }
+
+.hero-content {
+  position: relative; z-index: 1;
+  padding: 2rem 2.2rem 2rem;
+}
+.hero-eyebrow {
+  font-family:'Oswald',sans-serif;
+  font-size:.7rem; font-weight:500;
+  letter-spacing:.22em; text-transform:uppercase;
+  color: var(--red);
+  margin-bottom: .4rem;
+}
+.hero-title {
+  font-family:'Montserrat',sans-serif;
+  font-size: clamp(1.8rem, 3.6vw, 2.7rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -.01em;
+  margin-bottom: .6rem;
+  color: var(--text);
+  text-transform: uppercase;
+}
+.hero-route {
+  display: inline-flex; align-items: center; gap:.7rem; flex-wrap: wrap;
+  font-family:'Barlow',sans-serif;
+  font-size: 1rem; font-weight: 500;
+  color: rgba(255,255,255,.78);
+}
+.hero-route .arrow {
+  color: var(--red);
+  font-family:'Oswald',sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+/* ══════════════════════════════════════
+   META GRID
+══════════════════════════════════════ */
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.6rem;
+}
+.meta-card {
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.2rem;
+  transition: border-color .25s, transform .25s;
+}
+.meta-card:hover {
+  border-color: var(--red);
+  transform: translateY(-2px);
+}
+.meta-label {
+  font-family:'Oswald',sans-serif;
+  font-size:.62rem; font-weight:500;
+  letter-spacing:.22em; text-transform:uppercase;
+  color: var(--text-muted);
+  margin-bottom:.5rem;
+  display: flex; align-items: center; gap: .35rem;
+}
+.meta-value {
+  font-family:'Montserrat',sans-serif;
+  font-size: 1.2rem; font-weight: 800;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -.01em;
+}
+.meta-sub {
+  font-family:'Barlow',sans-serif;
+  font-size:.78rem; color: var(--text-muted);
+  margin-top:.25rem;
+}
+.diff-easy     { color: var(--diff-easy); }
+.diff-moderate { color: var(--diff-moderate); }
+.diff-hard     { color: var(--diff-hard); }
+.diff-extreme  { color: var(--diff-extreme); }
+
+/* ══════════════════════════════════════
+   INFO PANELS
+══════════════════════════════════════ */
+.panel {
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.4rem 1.6rem;
+  margin-bottom: 1.2rem;
+}
+.panel-title {
+  font-family:'Montserrat',sans-serif;
+  font-size:.72rem; font-weight:800;
+  letter-spacing:.22em; text-transform:uppercase;
+  color: var(--red);
+  margin-bottom: 1rem;
+  display: flex; align-items: center; gap: .5rem;
+}
+.panel-title::before {
+  content: '';
+  width: 18px; height: 2px; background: var(--red);
+  display: inline-block;
+}
+.panel-body {
+  font-family:'Barlow',sans-serif;
+  font-size:.95rem; line-height: 1.7;
+  color: var(--text-dim);
+}
+.panel-body p + p { margin-top: .35rem; }
+.panel-body strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ── Organizer row ── */
+.organizer-row {
+  display: flex; align-items: center; gap: 1rem;
+}
+.org-avatar {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: #1e1e1e;
+  border: 2px solid var(--red);
+  display: flex; align-items: center; justify-content: center;
+  font-family:'Montserrat',sans-serif;
+  font-weight: 900; font-size: 1.4rem;
+  color: var(--red);
+  flex-shrink: 0;
+}
+.org-name {
+  font-family:'Montserrat',sans-serif;
+  font-size: 1.05rem; font-weight: 800;
+  color: var(--text);
+  letter-spacing: -.01em;
+}
+.org-meta {
+  font-family:'Barlow',sans-serif;
+  font-size:.82rem; color: var(--text-muted);
+  margin-top: .2rem;
+}
+
+/* ── Sponsor strip ── */
+.sponsor-list {
+  display:flex; flex-wrap: wrap; gap: .55rem;
+}
+.sponsor-chip {
+  display: inline-flex; align-items: center; gap: .4rem;
+  font-family:'Montserrat',sans-serif;
+  font-size:.7rem; font-weight:700;
+  letter-spacing:.1em; text-transform: uppercase;
+  padding: .4rem .85rem;
+  background: rgba(232,0,13,.08);
+  border: 1px solid var(--red);
+  color: var(--red);
+  border-radius: 4px;
+}
+.sponsor-chip::before { content: '★'; font-size: .75rem; }
+
+/* ── Group chat row ── */
+.comm-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: .9rem 1.2rem;
+  background: rgba(255,255,255,.03);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.comm-text {
+  display: flex; align-items: center; gap: .6rem;
+  font-family:'Barlow',sans-serif;
+  font-size:.95rem;
+  color: var(--text);
+}
+.comm-icon {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--red-glow);
+  border: 1px solid var(--red);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+}
+.comm-link-btn {
+  font-family:'Montserrat',sans-serif;
+  font-size:.65rem; font-weight:800;
+  letter-spacing:.18em; text-transform:uppercase;
+  padding: .55rem 1.1rem;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--red);
+  background: transparent;
+  color: var(--red);
+  cursor: pointer;
+  transition: background .25s, color .25s, box-shadow .25s;
+}
+.comm-link-btn:hover {
+  background: var(--red); color:#fff;
+  box-shadow: 0 0 16px var(--red-glow);
+}
+
+/* ══════════════════════════════════════
+   ACTION FOOTER
+══════════════════════════════════════ */
+.action-footer {
+  display: flex; align-items: center; justify-content: space-between; gap: 1.4rem;
+  padding: 1.4rem 1.6rem;
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
+  border-left: 4px solid var(--red);
+  border-radius: var(--radius);
+  flex-wrap: wrap;
+  margin-top: 1.6rem;
+}
+.action-summary {
+  display: flex; flex-direction: column; gap: .2rem;
+}
+.action-headline {
+  font-family:'Montserrat',sans-serif;
+  font-size: 1.05rem; font-weight: 800;
+  color: var(--text);
+  letter-spacing: -.01em;
+}
+.action-sub {
+  font-family:'Barlow',sans-serif;
+  font-size:.85rem;
+  color: var(--text-dim);
+}
+.action-sub.warn  { color: var(--warn); }
+.action-sub.error { color: var(--error); }
+
+.action-buttons {
+  display: flex; gap: .7rem; flex-wrap: wrap;
+}
+
+.btn-action {
+  font-family:'Montserrat',sans-serif;
+  font-size:.7rem; font-weight: 800;
+  letter-spacing:.18em; text-transform: uppercase;
+  padding: .9rem 1.8rem;
+  min-height: 48px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: .5rem;
+  position: relative; overflow: hidden;
+  transition: box-shadow .25s, color .25s, transform .15s;
+}
+.btn-action.primary {
+  background: var(--red); color: #fff;
+  border: 2px solid var(--red);
+}
+.btn-action.primary:hover:not(:disabled) {
+  box-shadow: 0 0 28px var(--red-glow);
+  transform: translateY(-1px);
+}
+.btn-action.outline {
+  background: transparent; color: var(--text);
+  border: 2px solid var(--red);
+}
+.btn-action.outline:hover:not(:disabled) {
+  background: var(--red); color:#fff;
+  box-shadow: 0 0 22px var(--red-glow);
+}
+.btn-action.ghost {
+  background: transparent; color: var(--text-dim);
+  border: 1.5px solid var(--border);
+}
+.btn-action.ghost:hover:not(:disabled) {
+  border-color: var(--error); color: var(--error); background: rgba(232,0,13,.06);
+}
+.btn-action:disabled {
+  opacity: .4; cursor: not-allowed;
+  box-shadow: none; transform: none;
+}
+
+/* ══════════════════════════════════════
+   STATES — skeleton, error
+══════════════════════════════════════ */
+.skeleton-hero {
+  height: 360px; border-radius: var(--radius);
+  background: linear-gradient(110deg, #1a1a1a 30%, #232323 50%, #1a1a1a 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+  border: 1.5px solid var(--border);
+  margin-bottom: 1.6rem;
+}
+.skeleton-meta-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;
+  margin-bottom: 1.6rem;
+}
+.skeleton-meta {
+  height: 90px;
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  position: relative; overflow: hidden;
+}
+.skeleton-meta::after {
+  content:''; position:absolute; inset:0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.05) 50%, transparent 100%);
+  animation: shimmer-pass 1.4s linear infinite;
+}
+
+@keyframes shimmer       { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@keyframes shimmer-pass  { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+@keyframes fade-in       { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+.error-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+}
+.error-icon { font-size: 2.6rem; opacity: .25; display:block; margin-bottom: 1rem; }
+.error-title {
+  font-family:'Montserrat',sans-serif;
+  font-size: 1.4rem; font-weight: 800;
+  letter-spacing: -.01em;
+  color: var(--text); margin-bottom: .4rem;
+  text-transform: uppercase;
+}
+.error-desc {
+  font-family:'Barlow',sans-serif;
+  font-size:.92rem; color: var(--text-dim);
+  max-width: 380px; margin: 0 auto 1.4rem;
+  line-height: 1.6;
+}
+
+/* ══════════════════════════════════════
+   TOAST
+══════════════════════════════════════ */
+#toast {
+  position: fixed; bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--card-bg);
+  border: 1.5px solid var(--red);
+  color: var(--text);
+  padding: .8rem 1.4rem;
+  border-radius: var(--radius-sm);
+  font-family:'Montserrat',sans-serif;
+  font-weight: 700; font-size: .8rem;
+  letter-spacing: .08em;
+  box-shadow: 0 16px 48px rgba(0,0,0,.6);
+  z-index: 9999; opacity: 0;
+  transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+#toast.visible {
+  opacity: 1; transform: translateX(-50%) translateY(0);
+}
+
+/* ══════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════ */
+@media (max-width: 880px) {
+  .meta-grid, .skeleton-meta-grid { grid-template-columns: repeat(2, 1fr); }
+  .hero-content { padding: 1.6rem 1.6rem 1.6rem; }
+  main { padding: 1.6rem 1.4rem 5rem; }
+}
+@media (max-width: 540px) {
+  nav { padding: 0 1rem; grid-template-columns: auto 1fr auto; }
+  .nav-back { padding: .35rem .55rem; font-size: .6rem; }
+  .nav-back span { display:none; }
+  .nav-about { display:none; }
+  .meta-grid, .skeleton-meta-grid { grid-template-columns: 1fr 1fr; }
+  .ride-hero { min-height: 280px; }
+  .hero-title { font-size: 1.6rem; }
+  .action-footer { padding: 1.2rem; }
+  .action-buttons { width: 100%; }
+  .btn-action { flex: 1; padding: .9rem 1rem; }
+}
+
+/* scrollbar */
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:#2a2a2a; border-radius:2px; }
+</style>
+</head>
+<body>
+
+<!-- ══ NAVBAR ══ -->
+<nav>
+  <div class="nav-left">
+    <button class="nav-back" id="navBack">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+      </svg>
+      <span>Back to rides</span>
+    </button>
+  </div>
+
+  <div class="nav-center">
+    <img class="nav-logo-img" src="./public/images/rs-logo-04-04.png" alt="RideSync"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
+    <a href="new_rider_dashboard.html" class="nav-logo-text" style="display:none">RIDESYNC</a>
+  </div>
+
+  <div class="nav-right">
+    <a href="/about" class="nav-about">About us</a>
+    <div class="pfp-wrap" id="pfpWrap">
+      <div class="pfp-placeholder" id="pfpPlaceholder">?</div>
+    </div>
+  </div>
+</nav>
+
+<!-- ══ MAIN ══ -->
+<main id="main">
+  <!-- initial skeleton -->
+  <div id="content">
+    <div class="role-tag-row">
+      <div class="skeleton-meta" style="width:120px; height:28px; border-radius:4px;"></div>
+    </div>
+    <div class="skeleton-hero"></div>
+    <div class="skeleton-meta-grid">
+      <div class="skeleton-meta"></div>
+      <div class="skeleton-meta"></div>
+      <div class="skeleton-meta"></div>
+      <div class="skeleton-meta"></div>
+    </div>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ══════════════════════════════════════
+     CONFIG
+  ══════════════════════════════════════ */
+  const API_BASE = 'http://localhost:3000';
+  // Endpoint mounted under /rides per the latest backend routing.
+  // If your backend mounts at /dashboard instead, change this:
+  const RIDE_DETAILS_PATH = '/rides/ride_details/';
+
+  const TYPE_LABEL = {
+    adventure: 'Adventure', highway: 'Highway', city: 'City', offroad: 'Off-Road',
+  };
+  const COMM_ICON = { telegram: '✈', whatsapp: '💬', instagram: '📸' };
+  const COMM_LABEL = { telegram: 'Telegram', whatsapp: 'WhatsApp', instagram: 'Instagram' };
+  const ROLE_LABEL = { rider: 'RIDER VIEW', organizer: 'ORGANIZER VIEW', sponsor: 'SPONSOR VIEW' };
+
+  let currentUser = { username: 'User', email: '', role: 'rider', _id: '', pfp: null };
+  let activeRide  = null;
+  let activeFlags = {};
+
+  /* ══════════════════════════════════════
+     INIT
+  ══════════════════════════════════════ */
+  function init() {
+    loadUserFromCookie();
+    bindStaticEvents();
+
+    const rideId = new URLSearchParams(window.location.search).get('id');
+    if (!rideId) {
+      renderError(
+        'No ride selected',
+        'This page needs a ride id in the URL — open one from the dashboard to see its details.'
+      );
+      return;
+    }
+    fetchRideDetails(rideId);
+  }
+
+  /* ══════════════════════════════════════
+     AUTH
+  ══════════════════════════════════════ */
+  function loadUserFromCookie() {
+    try {
+      const match = document.cookie.match(/(?:^|;\s*)token=([^;]+)/);
+      if (match) {
+        const payload = JSON.parse(atob(match[1].split('.')[1]));
+        currentUser = {
+          username: payload.username || payload.userName || 'User',
+          email:    payload.email    || '',
+          role:     payload.role     || 'rider',
+          _id:      payload._id      || payload.id || '',
+          pfp:      payload.pfp      || null,
+        };
+      }
+    } catch (_) { /* fallthrough */ }
+    renderUserChrome();
+  }
+
+  function renderUserChrome() {
+    const wrap = document.getElementById('pfpWrap');
+    const placeholder = document.getElementById('pfpPlaceholder');
+    if (currentUser.pfp) {
+      wrap.innerHTML = `<img src="${escAttr(currentUser.pfp)}" alt="${escAttr(currentUser.username)}">`;
+    } else {
+      placeholder.textContent = (currentUser.username || 'U')[0].toUpperCase();
+    }
+  }
+
+  /* ══════════════════════════════════════
+     FETCH
+  ══════════════════════════════════════ */
+  async function fetchRideDetails(rideId) {
+    try {
+      const res = await fetch(API_BASE + RIDE_DETAILS_PATH + encodeURIComponent(rideId), {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (res.status === 401) {
+        renderError('Sign in required', 'Log in to view this ride.', {
+          actionLabel: 'Go to login', actionHref: 'new_login.html',
+        });
+        return;
+      }
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        renderError('Could not load ride', body.message || ('Server returned HTTP ' + res.status));
+        return;
+      }
+
+      const json = await res.json();
+      const data = json.data || {};
+      activeRide  = data.ride || data;
+      activeFlags = {
+        canBook: data.canBook,
+        canEdit: data.canEdit,
+        canContactForSponsor: data.canContactForSponsor,
+      };
+
+      if (!activeRide || !activeRide._id) {
+        renderError('Ride not found', 'No ride matches that id.');
+        return;
+      }
+
+      renderRide(activeRide, activeFlags);
+    } catch (err) {
+      console.warn('fetch failed', err);
+      renderError(
+        'Server unreachable',
+        `Could not reach ${API_BASE}. Make sure your backend is running.`
+      );
+    }
+  }
+
+  /* ══════════════════════════════════════
+     RENDER
+  ══════════════════════════════════════ */
+  function renderRide(ride, flags) {
+    const typeKey = (ride.type || '').toLowerCase();
+    const typeLabel = TYPE_LABEL[typeKey] || ride.type || 'General';
+
+    const maxSeats    = Number(ride.maxSeats || 0);
+    const bookedSeats = Number(ride.bookedSeats || 0);
+    const spotsLeft   = Math.max(maxSeats - bookedSeats, 0);
+    const isFull      = spotsLeft <= 0;
+
+    const startStr = locationToString(ride.startLocation, ride.startAddress);
+    const endStr   = locationToString(ride.endLocation,   ride.endAddress);
+
+    const dateRange = formatDateRange(ride.startDate, ride.endDate);
+    const diffKey   = (ride.difficulty || '').toLowerCase();
+    const feeText   = ride.entryFee > 0 ? '₹' + ride.entryFee : 'Free';
+    const statusKey = (ride.status || 'upcoming').toLowerCase();
+
+    const orgName = ride.userId?.username || ride.userId?.name || 'Organizer';
+    const orgInit = (orgName[0] || 'O').toUpperCase();
+    const orgMeta = ride.userId?.email
+      || (ride.userId?.GSTIN ? 'GSTIN: ' + ride.userId.GSTIN : '');
+
+    const sponsorIds = Array.isArray(ride.sponsorId) ? ride.sponsorId : [];
+    const banner     = ride.banner;
+
+    const heroBgStyle = banner
+      ? `background-image:url('${escAttr(banner)}');`
+      : '';
+
+    const html = `
+      <div class="role-tag-row">
+        <div class="role-tag">${escHtml(ROLE_LABEL[currentUser.role] || 'GUEST VIEW')}</div>
+      </div>
+
+      <div class="ride-hero">
+        <div class="hero-bg ${banner ? 'has-image' : ''}" style="${heroBgStyle}"></div>
+        <div class="hero-vignette"></div>
+        <div class="hero-chips">
+          <span class="chip type">${escHtml(typeLabel)}</span>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:flex-end;">
+            <span class="chip status status-${statusKey}">${escHtml(ride.status || 'Upcoming')}</span>
+            <span class="chip spots ${isFull ? 'full' : ''}">
+              ${isFull ? 'Fully Booked' : spotsLeft + ' spots left'}
+            </span>
+          </div>
+        </div>
+        <div class="hero-content">
+          <div class="hero-eyebrow">— Ride Details —</div>
+          <h1 class="hero-title">${escHtml(ride.title || 'Untitled ride')}</h1>
+          <div class="hero-route">
+            <span>${escHtml(startStr)}</span>
+            <span class="arrow">→</span>
+            <span>${escHtml(endStr)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="meta-grid">
+        <div class="meta-card">
+          <div class="meta-label">📅 Dates</div>
+          <div class="meta-value">${escHtml(dateRange)}</div>
+          ${ride.time ? `<div class="meta-sub">Start ${escHtml(ride.time)}</div>` : ''}
+        </div>
+        <div class="meta-card">
+          <div class="meta-label">📏 Distance</div>
+          <div class="meta-value">${ride.length ? escHtml(ride.length) + ' km' : '—'}</div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-label">⚡ Difficulty</div>
+          <div class="meta-value diff-${diffKey}">${escHtml(ride.difficulty || '—')}</div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-label">💰 Entry fee</div>
+          <div class="meta-value">${escHtml(feeText)}</div>
+          <div class="meta-sub">${bookedSeats}/${maxSeats || '—'} seats booked</div>
+        </div>
+      </div>
+
+      ${sponsorIds.length ? `
+        <div class="panel">
+          <div class="panel-title">Sponsored by</div>
+          <div class="sponsor-list">
+            ${sponsorIds.map(s => `
+              <span class="sponsor-chip">${escHtml(s.brandName || s.name || 'Sponsor')}</span>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <div class="panel">
+        <div class="panel-title">About this ride</div>
+        <div class="panel-body">
+          ${buildAboutBlock(ride)}
+        </div>
+      </div>
+
+      ${ride.communicationLink ? `
+        <div class="panel">
+          <div class="panel-title">Group chat</div>
+          <div class="comm-row">
+            <div class="comm-text">
+              <div class="comm-icon">${COMM_ICON[ride.communicationType] || '🔗'}</div>
+              <span>${escHtml(COMM_LABEL[ride.communicationType] || 'External link')}</span>
+            </div>
+            <button class="comm-link-btn" id="commLinkBtn">Open Chat</button>
+          </div>
+        </div>
+      ` : ''}
+
+      <div class="panel">
+        <div class="panel-title">Organized by</div>
+        <div class="organizer-row">
+          <div class="org-avatar">${orgInit}</div>
+          <div>
+            <div class="org-name">${escHtml(orgName)}</div>
+            ${orgMeta ? `<div class="org-meta">${escHtml(orgMeta)}</div>` : ''}
+          </div>
+        </div>
+      </div>
+
+      ${renderActionFooter(ride, flags, { isFull, spotsLeft })}
+    `;
+
+    document.getElementById('content').innerHTML = html;
+    bindDynamicEvents();
+  }
+
+  function buildAboutBlock(ride) {
+    const lines = [];
+    if (ride.time)             lines.push(`<p><strong>Start time:</strong> ${escHtml(ride.time)}</p>`);
+    if (ride.length)           lines.push(`<p><strong>Total distance:</strong> ${escHtml(ride.length)} km</p>`);
+    if (ride.difficulty)       lines.push(`<p><strong>Difficulty:</strong> ${escHtml(ride.difficulty)}</p>`);
+    if (ride.type)             lines.push(`<p><strong>Type:</strong> ${escHtml(ride.type)}</p>`);
+    if (ride.crossBike === false && ride.brand) {
+      lines.push(`<p><strong>Bike requirement:</strong> Restricted to ${escHtml(ride.brand)} riders</p>`);
+    } else if (ride.crossBike === true) {
+      lines.push(`<p><strong>Bike requirement:</strong> Open to all bike brands</p>`);
+    }
+    lines.push(`<p><strong>Entry fee:</strong> ${ride.entryFee > 0 ? '₹' + escHtml(ride.entryFee) : 'Free to join'}</p>`);
+    if (!lines.length) lines.push('<p>No additional details provided.</p>');
+    return lines.join('');
+  }
+
+  /* ── Role-based action footer ── */
+  function renderActionFooter(ride, flags, ctx) {
+    const role = currentUser.role;
+
+    if (role === 'rider') {
+      const canBook = !!flags.canBook;
+      let headline, sub, subClass = '', disabled = '';
+      if (canBook) {
+        headline = 'Ready to ride?';
+        sub      = 'Book your seat — chat with the organizer first if you want.';
+      } else {
+        disabled = 'disabled';
+        if (ctx.isFull) {
+          headline = 'This ride is fully booked';
+          sub      = 'All seats taken. Check back if someone drops out.';
+          subClass = 'error';
+        } else if (ride.crossBike === false) {
+          headline = "Bike doesn't match";
+          sub      = `This ride is locked to ${escHtml(ride.brand || 'a specific brand')}. Add a matching bike to your garage to book.`;
+          subClass = 'warn';
+        } else {
+          headline = 'Booking unavailable';
+          sub      = "You can't book this ride right now.";
+          subClass = 'warn';
+        }
+      }
+      return `
+        <div class="action-footer">
+          <div class="action-summary">
+            <div class="action-headline">${escHtml(headline)}</div>
+            <div class="action-sub ${subClass}">${escHtml(sub)}</div>
+          </div>
+          <div class="action-buttons">
+            <button class="btn-action primary" id="btnBook" ${disabled}>
+              Book this ride
+            </button>
+          </div>
+        </div>`;
+    }
+
+    if (role === 'organizer') {
+      const canEdit = !!flags.canEdit;
+      if (canEdit) {
+        return `
+          <div class="action-footer">
+            <div class="action-summary">
+              <div class="action-headline">You organized this ride</div>
+              <div class="action-sub">Edit the details or cancel if plans changed.</div>
+            </div>
+            <div class="action-buttons">
+              <button class="btn-action ghost" id="btnCancel">Cancel ride</button>
+              <button class="btn-action primary" id="btnEdit">Edit ride</button>
+            </div>
+          </div>`;
+      }
+      return `
+        <div class="action-footer">
+          <div class="action-summary">
+            <div class="action-headline">Read-only view</div>
+            <div class="action-sub">Only the organizer who created this ride can edit it.</div>
+          </div>
+        </div>`;
+    }
+
+    if (role === 'sponsor') {
+      const canContact = flags.canContactForSponsor !== false;
+      return `
+        <div class="action-footer">
+          <div class="action-summary">
+            <div class="action-headline">Want to sponsor this ride?</div>
+            <div class="action-sub">Reach out to the organizer to discuss partnership terms.</div>
+          </div>
+          <div class="action-buttons">
+            <button class="btn-action primary" id="btnSponsor" ${canContact ? '' : 'disabled'}>
+              Contact organizer
+            </button>
+          </div>
+        </div>`;
+    }
+
+    return `
+      <div class="action-footer">
+        <div class="action-summary">
+          <div class="action-headline">Ride details</div>
+          <div class="action-sub">Sign in with the right role to interact with this ride.</div>
+        </div>
+      </div>`;
+  }
+
+  /* ══════════════════════════════════════
+     ERROR STATE
+  ══════════════════════════════════════ */
+  function renderError(title, desc, opts) {
+    opts = opts || {};
+    const action = opts.actionHref
+      ? `<a href="${escAttr(opts.actionHref)}" class="btn-action primary" style="display:inline-flex;text-decoration:none;">${escHtml(opts.actionLabel || 'Continue')}</a>`
+      : `<button class="btn-action outline" id="errRetry">Retry</button>`;
+    document.getElementById('content').innerHTML = `
+      <div class="error-state">
+        <span class="error-icon">⚠</span>
+        <div class="error-title">${escHtml(title)}</div>
+        <div class="error-desc">${escHtml(desc)}</div>
+        ${action}
+      </div>`;
+    const retry = document.getElementById('errRetry');
+    if (retry) retry.addEventListener('click', () => window.location.reload());
+  }
+
+  /* ══════════════════════════════════════
+     EVENTS
+  ══════════════════════════════════════ */
+  function bindStaticEvents() {
+    document.getElementById('navBack').addEventListener('click', () => {
+      const dashboard = currentUser.role === 'organizer'
+        ? 'new_organizer_dashboard.html' : 'new_rider_dashboard.html';
+      if (window.history.length > 1) window.history.back();
+      else window.location.href = dashboard;
+    });
+  }
+
+  function bindDynamicEvents() {
+    const commBtn = document.getElementById('commLinkBtn');
+    if (commBtn) commBtn.addEventListener('click', () => {
+      if (activeRide?.communicationLink) {
+        window.open(activeRide.communicationLink, '_blank', 'noopener');
+      }
+    });
+
+    const btnBook = document.getElementById('btnBook');
+    if (btnBook) btnBook.addEventListener('click', () => {
+      if (activeRide?.communicationLink) {
+        window.open(activeRide.communicationLink, '_blank', 'noopener');
+        showToast('Group chat opened — confirm with the organizer there.');
+      } else {
+        showToast('Booking flow not wired up yet.');
+      }
+    });
+
+    const btnEdit = document.getElementById('btnEdit');
+    if (btnEdit) btnEdit.addEventListener('click', () => showToast('Edit flow coming soon.'));
+
+    const btnCancel = document.getElementById('btnCancel');
+    if (btnCancel) btnCancel.addEventListener('click', () => {
+      if (!confirm('Cancel this ride? Riders who booked will be notified.')) return;
+      showToast('Cancel flow coming soon.');
+    });
+
+    const btnSponsor = document.getElementById('btnSponsor');
+    if (btnSponsor) btnSponsor.addEventListener('click', () => {
+      if (activeRide?.communicationLink) {
+        window.open(activeRide.communicationLink, '_blank', 'noopener');
+      } else {
+        showToast('No public contact link on this ride yet.');
+      }
+    });
+  }
+
+  /* ══════════════════════════════════════
+     UTILITIES
+  ══════════════════════════════════════ */
+  function locationToString(loc, addressFallback) {
+    if (!loc) return addressFallback || '?';
+    if (typeof loc === 'string') return loc;
+    if (loc.coordinates && Array.isArray(loc.coordinates)) {
+      if (addressFallback) return addressFallback;
+      const [lng, lat] = loc.coordinates;
+      return `${Number(lat).toFixed(3)}, ${Number(lng).toFixed(3)}`;
+    }
+    return addressFallback || '?';
+  }
+
+  function formatDateRange(start, end) {
+    if (!start) return 'Date TBD';
+    const s = new Date(start);
+    const e = end ? new Date(end) : null;
+    const opts = { day: 'numeric', month: 'short', year: 'numeric' };
+    if (!e || isNaN(e) || s.toDateString() === e.toDateString()) {
+      return isNaN(s) ? String(start) : s.toLocaleDateString('en-IN', opts);
+    }
+    return s.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) +
+           ' – ' + e.toLocaleDateString('en-IN', opts);
+  }
+
+  function escHtml(str) {
+    return String(str == null ? '' : str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function escAttr(str) { return escHtml(str); }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('visible');
+    setTimeout(() => t.classList.remove('visible'), 3200);
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

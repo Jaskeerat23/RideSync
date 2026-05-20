@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RideSync — Create Ride</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="./public/images/rs-logo-04-04.png">
+<style>
+:root {
+  --red: #e8192c;
+  --red-dark: #c0111f;
+  --red-glow: rgba(232,25,44,0.18);
+  --bg-card: rgba(14, 14, 17, 0.88);
+  --bg-input: rgba(255,255,255,0.05);
+  --bg-input-focus: rgba(255,255,255,0.08);
+  --border: rgba(255,255,255,0.07);
+  --border-hover: rgba(255,255,255,0.14);
+  --text: #f0f0f0;
+  --text-muted: #666;
+  --text-label: #888;
+  --dropdown-bg: #111114;
+  --radius-card: 20px;
+  --radius-input: 12px;
+  --radius-btn: 12px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Barlow', sans-serif;
+  min-height: 100vh;
+  background:
+    linear-gradient(160deg, rgba(0,0,0,0.82) 0%, rgba(12,0,0,0.72) 100%),
+    url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&q=80') center/cover no-repeat fixed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+}
+
+/* ── CARD ── */
+.card {
+  width: 100%;
+  max-width: 660px;
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-card);
+  backdrop-filter: blur(28px) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04) inset,
+    0 40px 80px rgba(0,0,0,0.6),
+    0 0 60px rgba(232,25,44,0.04);
+  animation: cardIn .45s cubic-bezier(.22,.68,0,1.2);
+}
+
+@keyframes cardIn {
+  from { opacity:0; transform:translateY(32px) scale(.98); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+
+/* ── LOGO ── */
+.logo-bar {
+  text-align: center;
+  padding: 36px 0 22px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.logo-bar::after {
+  content: '';
+  position: absolute;
+  bottom: -1px; left: 50%;
+  transform: translateX(-50%);
+  width: 60px; height: 2px;
+  background: var(--red);
+  border-radius: 99px;
+}
+.logo-bar .wordmark {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 5px;
+  color: #fff;
+}
+.logo-bar .wordmark span { color: var(--red); }
+.logo-bar .tagline-dashes {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 10px;
+}
+.logo-bar .tagline-dashes i {
+  display: block;
+  height: 2px;
+  background: rgba(232,25,44,0.5);
+  border-radius: 99px;
+}
+.logo-bar .tagline-dashes i:nth-child(1) { width: 40px; }
+.logo-bar .tagline-dashes i:nth-child(2) { width: 20px; background: var(--red); }
+.logo-bar .tagline-dashes i:nth-child(3) { width: 40px; }
+
+/* ── STEP INDICATOR ── */
+.steps-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px 48px 18px;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+}
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  position: relative;
+}
+.step-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: 50%;
+  width: 100%;
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  z-index: 0;
+  transition: background .4s;
+}
+.step-item.done:not(:last-child)::after { background: var(--red); }
+
+.step-circle {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px; font-weight: 700;
+  color: var(--text-muted);
+  position: relative; z-index: 1;
+  transition: all .35s cubic-bezier(.34,1.56,.64,1);
+}
+.step-item.active .step-circle {
+  border-color: var(--red);
+  background: var(--red);
+  color: #fff;
+  box-shadow: 0 0 0 5px var(--red-glow);
+  transform: scale(1.1);
+}
+.step-item.done .step-circle {
+  border-color: var(--red);
+  background: var(--red);
+  color: #fff;
+  box-shadow: none;
+  transform: scale(1);
+}
+.step-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: color .3s;
+}
+.step-item.active .step-label { color: var(--red); }
+.step-item.done .step-label { color: rgba(232,25,44,0.55); }
+
+/* ── FORM BODY ── */
+.form-body { padding: 32px 44px 40px; }
+
+.step-heading { margin-bottom: 30px; }
+.step-heading h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 34px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #fff;
+  line-height: 1.05;
+}
+.step-heading h2 span { color: var(--red); display: block; }
+.step-heading p {
+  margin-top: 8px;
+  font-size: 10.5px;
+  letter-spacing: 2.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* ── FIELDS ── */
+.field { margin-bottom: 20px; position: relative; }
+.field label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-label);
+  margin-bottom: 8px;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-input);
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  font-size: 15px;
+  outline: none;
+  transition: border-color .2s, background .2s, box-shadow .2s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23666' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 38px;
+  cursor: pointer;
+}
+.field select option { background: #111114; }
+
+.field input:hover,
+.field select:hover { border-color: var(--border-hover); }
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: rgba(232,25,44,0.5);
+  background: var(--bg-input-focus);
+  box-shadow: 0 0 0 3px var(--red-glow);
+}
+.field input::placeholder,
+.field textarea::placeholder { color: #3a3a3e; }
+
+/* two-col grid */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* ── AUTOCOMPLETE DROPDOWN ── */
+.ac-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: var(--dropdown-bg);
+  border: 1px solid rgba(232,25,44,0.25);
+  border-radius: 14px;
+  z-index: 999;
+  max-height: 220px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03) inset;
+}
+.ac-dropdown.open { display: block; animation: dropIn .18s ease; }
+@keyframes dropIn {
+  from { opacity:0; transform:translateY(-6px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.ac-dropdown::-webkit-scrollbar { width: 3px; }
+.ac-dropdown::-webkit-scrollbar-track { background: transparent; }
+.ac-dropdown::-webkit-scrollbar-thumb { background: var(--red); border-radius: 99px; }
+
+.ac-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.ac-header .loc-title {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--red);
+}
+.ac-header .osm-tag {
+  font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+  color: #444;
+}
+.ac-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  transition: background .15s;
+}
+.ac-item:last-child { border-bottom: none; }
+.ac-item:hover { background: rgba(232,25,44,0.07); }
+.ac-item svg { flex-shrink: 0; }
+.ac-item .ac-name { font-size: 14px; font-weight: 600; color: #e0e0e0; }
+.ac-item .ac-sub  { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: .5px; }
+.ac-item .ac-coords {
+  margin-left: auto;
+  font-size: 10px; color: var(--red);
+  font-family: 'Barlow Condensed', monospace;
+  white-space: nowrap; opacity: .8;
+}
+
+/* ── MAP ── */
+.map-wrap {
+  height: 190px;
+  border: 1px solid var(--border);
+  border-radius: 0 0 var(--radius-input) var(--radius-input);
+  border-top: none;
+  display: none;
+  overflow: hidden;
+}
+.map-wrap.visible { display: block; }
+.map-wrap .leaflet-container { height: 100%; background: #0c0c10; }
+
+/* ── BANNER UPLOAD ── */
+.banner-zone {
+  border: 1.5px dashed rgba(255,255,255,0.1);
+  border-radius: var(--radius-input);
+  padding: 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .25s, background .25s;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-input);
+}
+.banner-zone:hover {
+  border-color: rgba(232,25,44,0.4);
+  background: rgba(232,25,44,0.03);
+}
+.banner-zone input[type=file] {
+  position: absolute; inset: 0;
+  opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.banner-zone .upload-icon { font-size: 30px; color: #3a3a3e; }
+.banner-zone .upload-text { font-size: 13px; color: #555; margin-top: 10px; letter-spacing: .5px; }
+.banner-zone .upload-hint { font-size: 10px; color: #333; margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
+#bannerPreview {
+  width: 100%; height: 130px;
+  object-fit: cover;
+  display: none;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+/* ── COMM TYPE BUTTONS ── */
+.comm-types {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.comm-btn {
+  padding: 16px 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-muted);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .25s;
+  border-radius: var(--radius-input);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.comm-btn svg { opacity: .35; transition: opacity .25s; }
+.comm-btn:hover {
+  border-color: rgba(232,25,44,0.35);
+  background: rgba(232,25,44,0.04);
+  color: #bbb;
+}
+.comm-btn.active {
+  border-color: rgba(232,25,44,0.6);
+  background: rgba(232,25,44,0.1);
+  color: #fff;
+  box-shadow: 0 0 0 3px var(--red-glow);
+}
+.comm-btn.active svg { opacity: 1; }
+
+/* ── NAV BUTTONS ── */
+.nav-row { display: flex; gap: 12px; margin-top: 30px; }
+
+.btn-back {
+  flex: 0 0 auto;
+  padding: 14px 26px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #888;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: var(--radius-btn);
+  transition: all .2s;
+}
+.btn-back:hover {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.2);
+  color: #ccc;
+}
+
+.btn-next {
+  flex: 1;
+  padding: 15px;
+  background: var(--red);
+  border: none;
+  color: #fff;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: var(--radius-btn);
+  transition: background .2s, box-shadow .2s, transform .15s;
+  box-shadow: 0 4px 20px rgba(232,25,44,0.3);
+}
+.btn-next:hover {
+  background: var(--red-dark);
+  box-shadow: 0 6px 28px rgba(232,25,44,0.45);
+  transform: translateY(-1px);
+}
+.btn-next:active { transform: translateY(0); }
+
+/* ── ERROR ── */
+.field-error {
+  font-size: 10px;
+  color: var(--red);
+  letter-spacing: 1px;
+  margin-top: 6px;
+  display: none;
+  padding-left: 4px;
+}
+.field-error.show { display: block; }
+.field input.invalid,
+.field select.invalid {
+  border-color: rgba(232,25,44,0.6) !important;
+  box-shadow: 0 0 0 3px var(--red-glow) !important;
+}
+
+/* ── REVIEW ── */
+.review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+.review-item {
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+}
+.review-item:nth-child(odd) { padding-right: 20px; }
+.review-item .rv-label {
+  font-size: 9px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;
+}
+.review-item .rv-val { font-size: 14px; font-weight: 600; color: #e0e0e0; }
+.review-item.full { grid-column: 1 / -1; }
+
+/* ── STEPS VISIBILITY ── */
+.step-panel { display: none; }
+.step-panel.active { display: block; }
+
+/* ── SUCCESS ── */
+.success-state {
+  display: none;
+  text-align: center;
+  padding: 56px 44px;
+}
+.success-state .check-circle {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: var(--red);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 24px;
+  font-size: 30px;
+  box-shadow: 0 0 0 12px var(--red-glow);
+}
+.success-state h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 34px; font-weight: 800;
+  letter-spacing: 4px; text-transform: uppercase; color: #fff;
+}
+.success-state p { color: var(--text-muted); margin-top: 10px; font-size: 14px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- LOGO -->
+  <div class="logo-bar">
+    <div class="wordmark">RIDE<span>SYNC</span></div>
+    <div class="tagline-dashes">
+      <i></i><i></i><i></i>
+    </div>
+  </div>
+
+  <!-- STEP INDICATOR -->
+  <div class="steps-bar" id="stepsBar">
+    <div class="step-item active" data-step="1">
+      <div class="step-circle">1</div>
+      <div class="step-label">Identity</div>
+    </div>
+    <div class="step-item" data-step="2">
+      <div class="step-circle">2</div>
+      <div class="step-label">Route</div>
+    </div>
+    <div class="step-item" data-step="3">
+      <div class="step-circle">3</div>
+      <div class="step-label">Schedule</div>
+    </div>
+    <div class="step-item" data-step="4">
+      <div class="step-circle">4</div>
+      <div class="step-label">Comms</div>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 1 — Identity ═══ -->
+  <div class="step-panel active" id="step1">
+    <div class="form-body">
+      <div class="step-heading">
+        <h2>YOUR RIDE <span>IDENTITY</span></h2>
+        <p>Step 1 — Basic Details</p>
+      </div>
+
+      <div class="field">
+        <label>Ride Title</label>
+        <input type="text" id="title" placeholder="e.g. Thunder Pass Run">
+        <div class="field-error" id="err-title">Title is required</div>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label>Ride Type</label>
+          <select id="type">
+            <option value="">Select type</option>
+            <option value="Adventure">Adventure</option>
+            <option value="Highway">Highway</option>
+            <option value="City">City</option>
+            <option value="OffRoad">OffRoad</option>
+          </select>
+          <div class="field-error" id="err-type">Select a type</div>
+        </div>
+        <div class="field">
+          <label>Difficulty</label>
+          <select id="difficulty">
+            <option value="">Select difficulty</option>
+            <option value="Easy">Easy</option>
+            <option value="Moderate">Moderate</option>
+            <option value="Hard">Hard</option>
+            <option value="Extreme">Extreme</option>
+          </select>
+          <div class="field-error" id="err-difficulty">Select difficulty</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Banner Image</label>
+        <div class="banner-zone" id="bannerZone">
+          <input type="file" id="bannerInput" accept="image/*">
+          <div class="upload-icon">📷</div>
+          <div class="upload-text">Click or drag to upload banner</div>
+          <div class="upload-hint">JPG, PNG, WEBP — Max 5MB</div>
+          <img id="bannerPreview" alt="Banner preview">
+        </div>
+      </div>
+
+      <div class="nav-row">
+        <button class="btn-next" onclick="goNext(1)">NEXT — ROUTE →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 2 — Route ═══ -->
+  <div class="step-panel" id="step2">
+    <div class="form-body">
+      <div class="step-heading">
+        <h2>YOUR RIDE <span>ROUTE</span></h2>
+        <p>Step 2 — Start & End Locations</p>
+      </div>
+
+      <!-- START LOCATION -->
+      <div class="field" id="startField">
+        <label>Start Location</label>
+        <input type="text" id="startSearch" placeholder="Search start location..." autocomplete="off">
+        <div class="ac-dropdown" id="startDropdown"></div>
+        <div class="field-error" id="err-start">Pick a start location from the list</div>
+      </div>
+      <div class="map-wrap" id="startMapWrap">
+        <div id="startMap"></div>
+      </div>
+
+      <!-- END LOCATION -->
+      <div class="field" id="endField" style="margin-top:18px;">
+        <label>End Location</label>
+        <input type="text" id="endSearch" placeholder="Search end location..." autocomplete="off">
+        <div class="ac-dropdown" id="endDropdown"></div>
+        <div class="field-error" id="err-end">Pick an end location from the list</div>
+      </div>
+      <div class="map-wrap" id="endMapWrap">
+        <div id="endMap"></div>
+      </div>
+
+      <div class="field" style="margin-top:18px;">
+        <label>Ride Length (km)</label>
+        <input type="number" id="length" placeholder="e.g. 240" min="0">
+      </div>
+
+      <div class="nav-row">
+        <button class="btn-back" onclick="goBack(2)">← BACK</button>
+        <button class="btn-next" onclick="goNext(2)">NEXT — SCHEDULE →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 3 — Schedule ═══ -->
+  <div class="step-panel" id="step3">
+    <div class="form-body">
+      <div class="step-heading">
+        <h2>RIDE <span>SCHEDULE</span></h2>
+        <p>Step 3 — Dates, Time & Capacity</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label>Start Date</label>
+          <input type="date" id="startDate">
+          <div class="field-error" id="err-startDate">Required</div>
+        </div>
+        <div class="field">
+          <label>End Date</label>
+          <input type="date" id="endDate">
+          <div class="field-error" id="err-endDate">Required</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Departure Time</label>
+        <input type="time" id="time">
+        <div class="field-error" id="err-time">Required</div>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label>Max Seats</label>
+          <input type="number" id="maxSeats" placeholder="e.g. 20" min="1">
+          <div class="field-error" id="err-maxSeats">Required</div>
+        </div>
+        <div class="field">
+          <label>Entry Fee (₹)</label>
+          <input type="number" id="entryFee" placeholder="0 = Free" min="0" value="0">
+        </div>
+      </div>
+
+      <div class="nav-row">
+        <button class="btn-back" onclick="goBack(3)">← BACK</button>
+        <button class="btn-next" onclick="goNext(3)">NEXT — COMMS →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 4 — Communication + Review ═══ -->
+  <div class="step-panel" id="step4">
+    <div class="form-body">
+      <div class="step-heading">
+        <h2>COMMUNICATION <span>& REVIEW</span></h2>
+        <p>Step 4 — Group Channel</p>
+      </div>
+
+      <div class="field">
+        <label>Select Platform</label>
+        <div class="comm-types">
+          <button class="comm-btn" data-type="telegram" onclick="selectComm(this)">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8l-1.68 7.94c-.12.56-.45.7-.91.43l-2.52-1.86-1.22 1.17c-.13.13-.25.25-.51.25l.18-2.56 4.65-4.2c.2-.18-.04-.28-.31-.1L8.28 14.7l-2.47-.77c-.54-.17-.55-.54.11-.8l9.66-3.72c.45-.16.84.11.69.79-.01 0-.01 0 0 0l.37-.4z" fill="#e8e8e8"/>
+            </svg>
+            TELEGRAM
+          </button>
+          <button class="comm-btn" data-type="whatsapp" onclick="selectComm(this)">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.37 5.07L2 22l5.09-1.34A9.94 9.94 0 0012 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.17 14.08c-.22.62-1.29 1.19-1.77 1.26-.48.07-1.09.1-1.75-.11-.4-.13-.92-.3-1.58-.59-2.78-1.2-4.59-4.01-4.73-4.2-.14-.19-1.12-1.49-1.12-2.84 0-1.35.71-2.01 1-2.28.28-.26.62-.33.83-.33h.59c.19 0 .45-.07.71.54.26.61.88 2.16.96 2.31.08.16.13.34.02.55-.1.2-.16.33-.31.51-.16.18-.33.41-.47.55-.16.16-.32.33-.14.65.18.31.8 1.32 1.72 2.13 1.18 1.05 2.18 1.38 2.49 1.54.31.16.49.13.67-.08.18-.2.77-.9.97-1.21.21-.31.41-.26.69-.16.28.1 1.79.84 2.1 1 .31.16.51.24.59.37.07.13.07.75-.15 1.37z" fill="#e8e8e8"/>
+            </svg>
+            WHATSAPP
+          </button>
+          <button class="comm-btn" data-type="instagram" onclick="selectComm(this)">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" fill="#e8e8e8"/>
+            </svg>
+            INSTAGRAM
+          </button>
+        </div>
+        <div class="field-error" id="err-commType">Select a platform</div>
+      </div>
+
+      <div class="field">
+        <label id="commLinkLabel">Group / Channel Link</label>
+        <input type="url" id="communicationLink" placeholder="Paste your group link here">
+        <div class="field-error" id="err-commLink">Link is required</div>
+      </div>
+
+      <!-- REVIEW SECTION -->
+      <div style="margin-top:28px; margin-bottom:8px;">
+        <div style="font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-bottom:14px;">
+          ── REVIEW YOUR RIDE ──
+        </div>
+        <div class="review-grid" id="reviewGrid"></div>
+      </div>
+
+      <div class="nav-row">
+        <button class="btn-back" onclick="goBack(4)">← BACK</button>
+        <button class="btn-next" id="submitBtn" onclick="submitRide()">🏍 LAUNCH RIDE →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success-state" id="successState">
+    <div class="check-circle">✓</div>
+    <h2>RIDE CREATED!</h2>
+    <p>Your ride has been launched successfully.<br>The brotherhood awaits.</p>
+  </div>
+
+</div><!-- /card -->
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+// ── STATE ──
+let currentStep = 1;
+let startLocation = null, endLocation = null;
+let startAddress = '', endAddress = '';
+let selectedCommType = '';
+let startMap, endMap, startMarker, endMarker;
+let mapsInitialized = false;
+
+// ── STEP NAV ──
+function showStep(n) {
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+
+  document.querySelectorAll('.step-item').forEach(el => {
+    const s = parseInt(el.dataset.step);
+    el.classList.remove('active', 'done');
+    if (s === n) el.classList.add('active');
+    else if (s < n) el.classList.add('done');
+  });
+
+  currentStep = n;
+  if (n === 2 && !mapsInitialized) initMaps();
+  if (n === 4) buildReview();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goBack(from) { showStep(from - 1); }
+
+function goNext(from) {
+  if (!validateStep(from)) return;
+  showStep(from + 1);
+}
+
+// ── VALIDATION ──
+function validateStep(step) {
+  let ok = true;
+
+  function fail(inputId, errId) {
+    const el = document.getElementById(inputId);
+    const er = document.getElementById(errId);
+    if (el) el.classList.add('invalid');
+    if (er) er.classList.add('show');
+    ok = false;
+  }
+  function clear(inputId, errId) {
+    const el = document.getElementById(inputId);
+    const er = document.getElementById(errId);
+    if (el) el.classList.remove('invalid');
+    if (er) er.classList.remove('show');
+  }
+
+  if (step === 1) {
+    const title = document.getElementById('title').value.trim();
+    const type  = document.getElementById('type').value;
+    const diff  = document.getElementById('difficulty').value;
+    title ? clear('title','err-title') : fail('title','err-title');
+    type  ? clear('type','err-type')   : fail('type','err-type');
+    diff  ? clear('difficulty','err-difficulty') : fail('difficulty','err-difficulty');
+  }
+
+  if (step === 2) {
+    startLocation ? clear('startSearch','err-start') : fail('startSearch','err-start');
+    endLocation   ? clear('endSearch','err-end')     : fail('endSearch','err-end');
+  }
+
+  if (step === 3) {
+    const sd = document.getElementById('startDate').value;
+    const ed = document.getElementById('endDate').value;
+    const t  = document.getElementById('time').value;
+    const ms = document.getElementById('maxSeats').value;
+    sd ? clear('startDate','err-startDate') : fail('startDate','err-startDate');
+    ed ? clear('endDate','err-endDate')     : fail('endDate','err-endDate');
+    t  ? clear('time','err-time')           : fail('time','err-time');
+    ms ? clear('maxSeats','err-maxSeats')   : fail('maxSeats','err-maxSeats');
+  }
+
+  if (step === 4) {
+    const link = document.getElementById('communicationLink').value.trim();
+    selectedCommType
+      ? document.getElementById('err-commType').classList.remove('show')
+      : (document.getElementById('err-commType').classList.add('show'), ok = false);
+    link
+      ? document.getElementById('err-commLink').classList.remove('show')
+      : (document.getElementById('err-commLink').classList.add('show'), ok = false);
+  }
+
+  return ok;
+}
+
+// ── MAPS ──
+function initMaps() {
+  mapsInitialized = true;
+
+  startMap = L.map('startMap').setView([20.5937, 78.9629], 4);
+  endMap   = L.map('endMap').setView([20.5937, 78.9629], 4);
+
+  const tile = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+  L.tileLayer(tile).addTo(startMap);
+  L.tileLayer(tile).addTo(endMap);
+
+  startMap.on('click', e => {
+    startLocation = { lat: e.latlng.lat, lng: e.latlng.lng };
+    if (startMarker) startMap.removeLayer(startMarker);
+    startMarker = L.marker(e.latlng).addTo(startMap);
+  });
+
+  endMap.on('click', e => {
+    endLocation = { lat: e.latlng.lat, lng: e.latlng.lng };
+    if (endMarker) endMap.removeLayer(endMarker);
+    endMarker = L.marker(e.latlng).addTo(endMap);
+  });
+}
+
+// ── AUTOCOMPLETE ──
+let debounceTimer;
+function setupAutocomplete(inputId, dropdownId, mapRef, markerRef, locSetter, addrSetter, mapWrapId) {
+  const input    = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  const mapWrap  = document.getElementById(mapWrapId);
+
+  input.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    const q = input.value.trim();
+    if (q.length < 3) { dropdown.classList.remove('open'); return; }
+    debounceTimer = setTimeout(() => fetchSuggestions(q, dropdown, mapRef, markerRef, locSetter, addrSetter, mapWrap), 300);
+  });
+
+  document.addEventListener('click', e => {
+    if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+      dropdown.classList.remove('open');
+    }
+  });
+}
+
+async function fetchSuggestions(q, dropdown, mapRef, markerRef, locSetter, addrSetter, mapWrap) {
+  try {
+    const res  = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5`);
+    const data = await res.json();
+    renderDropdown(data, dropdown, mapRef, markerRef, locSetter, addrSetter, mapWrap);
+  } catch(e) { console.error(e); }
+}
+
+function renderDropdown(data, dropdown, mapRef, markerRef, locSetter, addrSetter, mapWrap) {
+  dropdown.innerHTML = '';
+  if (!data.length) { dropdown.classList.remove('open'); return; }
+
+  const header = document.createElement('div');
+  header.className = 'ac-header';
+  header.innerHTML = `<span class="loc-title">Locations</span><span class="osm-tag">Via OpenStreetMap</span>`;
+  dropdown.appendChild(header);
+
+  data.forEach(place => {
+    const parts = place.display_name.split(',');
+    const name  = parts[0].trim();
+    const sub   = parts.slice(1, 3).join(',').trim().toUpperCase();
+    const lat   = parseFloat(place.lat).toFixed(4);
+    const lon   = parseFloat(place.lon).toFixed(4);
+
+    const item = document.createElement('div');
+    item.className = 'ac-item';
+    item.innerHTML = `
+      <svg width="16" height="20" viewBox="0 0 16 20" fill="none">
+        <path d="M8 0C3.58 0 0 3.58 0 8c0 5.5 8 12 8 12s8-6.5 8-12c0-4.42-3.58-8-8-8zm0 10.5c-1.38 0-2.5-1.12-2.5-2.5S6.62 5.5 8 5.5s2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="var(--red)"/>
+      </svg>
+      <div>
+        <div class="ac-name">${name}</div>
+        <div class="ac-sub">${sub}</div>
+      </div>
+      <div class="ac-coords">${lat}, ${lon}</div>
+    `;
+
+    item.onclick = () => {
+      const lLat = parseFloat(place.lat);
+      const lLon = parseFloat(place.lon);
+      mapRef().setView([lLat, lLon], 12);
+      mapWrap.classList.add('visible');
+      setTimeout(() => mapRef().invalidateSize(), 100);
+      if (markerRef.current) mapRef().removeLayer(markerRef.current);
+      markerRef.current = L.marker([lLat, lLon]).addTo(mapRef());
+      locSetter({ lat: lLat, lng: lLon });
+      addrSetter(place.display_name);
+      dropdown.classList.remove('open');
+
+      // update input display
+      dropdown.previousElementSibling
+        ? (dropdown.parentElement.querySelector('input').value = name + ', ' + sub)
+        : null;
+      const inp = dropdown.parentElement.querySelector('input');
+      if (inp) inp.value = name + (sub ? ', ' + sub : '');
+    };
+
+    dropdown.appendChild(item);
+  });
+
+  dropdown.classList.add('open');
+}
+
+// setup refs
+const sRef = { current: null };
+const eRef = { current: null };
+
+document.addEventListener('DOMContentLoaded', () => {
+  setupAutocomplete(
+    'startSearch', 'startDropdown',
+    () => startMap, sRef,
+    loc  => { startLocation = loc; },
+    addr => { startAddress  = addr; },
+    'startMapWrap'
+  );
+  setupAutocomplete(
+    'endSearch', 'endDropdown',
+    () => endMap, eRef,
+    loc  => { endLocation = loc; },
+    addr => { endAddress  = addr; },
+    'endMapWrap'
+  );
+
+  // Banner preview
+  document.getElementById('bannerInput').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = document.getElementById('bannerPreview');
+      img.src = ev.target.result;
+      img.style.display = 'block';
+      document.querySelector('.banner-zone .upload-icon').style.display = 'none';
+      document.querySelector('.banner-zone .upload-text').style.display = 'none';
+      document.querySelector('.banner-zone .upload-hint').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  });
+});
+
+// ── COMM TYPE ──
+const commLabels = {
+  telegram:  'Telegram Group / Channel Link',
+  whatsapp:  'WhatsApp Group Invite Link',
+  instagram: 'Instagram Group / Channel Link'
+};
+
+function selectComm(btn) {
+  document.querySelectorAll('.comm-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedCommType = btn.dataset.type;
+  document.getElementById('commLinkLabel').textContent = commLabels[selectedCommType];
+  document.getElementById('communicationLink').placeholder = 'Paste your ' + selectedCommType + ' link here';
+}
+
+// ── REVIEW ──
+function buildReview() {
+  const grid = document.getElementById('reviewGrid');
+  const items = [
+    ['Title',      document.getElementById('title').value],
+    ['Type',       document.getElementById('type').value],
+    ['Difficulty', document.getElementById('difficulty').value],
+    ['Start',      startAddress ? startAddress.split(',').slice(0,2).join(',') : '—'],
+    ['End',        endAddress   ? endAddress.split(',').slice(0,2).join(',')   : '—'],
+    ['Length',     document.getElementById('length').value ? document.getElementById('length').value + ' km' : '—'],
+    ['Start Date', document.getElementById('startDate').value],
+    ['End Date',   document.getElementById('endDate').value],
+    ['Time',       document.getElementById('time').value],
+    ['Max Seats',  document.getElementById('maxSeats').value],
+    ['Entry Fee',  document.getElementById('entryFee').value == 0 ? 'Free' : '₹' + document.getElementById('entryFee').value],
+    ['Platform',   selectedCommType || '—'],
+  ];
+
+  grid.innerHTML = items.map(([label, val]) => `
+    <div class="review-item">
+      <div class="rv-label">${label}</div>
+      <div class="rv-val">${val || '—'}</div>
+    </div>
+  `).join('');
+}
+
+// ── SUBMIT ──
+async function submitRide() {
+  if (!validateStep(4)) return;
+
+  const btn = document.getElementById('submitBtn');
+  btn.textContent = 'LAUNCHING...';
+  btn.disabled = true;
+
+  try {
+    const fd = new FormData();
+    const bannerFile = document.getElementById('bannerInput').files[0];
+    if (bannerFile) fd.append('banner', bannerFile);
+
+    fd.append('title',             document.getElementById('title').value.trim());
+    fd.append('type',              document.getElementById('type').value);
+    fd.append('difficulty',        document.getElementById('difficulty').value);
+    fd.append('startDate',         document.getElementById('startDate').value);
+    fd.append('endDate',           document.getElementById('endDate').value);
+    fd.append('time',              document.getElementById('time').value);
+    fd.append('length',            document.getElementById('length').value);
+    fd.append('maxSeats',          document.getElementById('maxSeats').value);
+    fd.append('entryFee',          document.getElementById('entryFee').value || 0);
+    fd.append('communicationType', selectedCommType);
+    fd.append('communicationLink', document.getElementById('communicationLink').value.trim());
+    fd.append('startAddress',      startAddress);
+    fd.append('endAddress',        endAddress);
+    fd.append('startLocation', JSON.stringify({
+      type: 'Point',
+      coordinates: [startLocation.lng, startLocation.lat]
+    }));
+    fd.append('endLocation', JSON.stringify({
+      type: 'Point',
+      coordinates: [endLocation.lng, endLocation.lat]
+    }));
+    
+    console.log(fd);
+
+    const res = await fetch('http://localhost:3000/rides/create_ride', {
+      method: 'POST',
+      credentials: 'include',
+      body: fd
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Server error');
+    }
+
+    const result = await res.json();
+    if (result.success) {
+      document.getElementById('stepsBar').style.display = 'none';
+      document.getElementById('step4').style.display = 'none';
+      document.getElementById('successState').style.display = 'block';
+    } else {
+      throw new Error(result.message || 'Unknown error');
+    }
+
+  } catch (err) {
+    alert('Error: ' + err.message);
+    btn.textContent = '🏍 LAUNCH RIDE →';
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
