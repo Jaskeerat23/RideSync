@@ -404,9 +404,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (pfp) document.getElementById('orgPfp').src = pfp;
     document.getElementById('userName').textContent = username;
-    
+
     // ── Basic Analysis ──
-    fetch('https://ride-sync-backend.onrender.com/dashboard/get_basic_analysis', {
+    fetch('https://ride-sync-backend-v1.onrender.com/dashboard/get_basic_analysis', {
         method: 'GET',
         credentials: 'include'
     })
@@ -421,7 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .catch(err => console.error('Error fetching analysis:', err));
 
     // ── Successful Rides ──
-    fetch('https://ride-sync-backend.onrender.com/dashboard/get_successful_rides', {
+    fetch('https://ride-sync-backend-v1.onrender.com/dashboard/get_successful_rides', {
         method: 'GET',
         credentials: 'include'
     })
