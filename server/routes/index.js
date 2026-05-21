@@ -12,7 +12,7 @@ const app = express();
 
 // Global middlewares 
 app.use(cors({
-    origin: 'http://localhost:5500', // EXACT frontend origin
+    origin: 'https://ride-sync-psi.vercel.app', // EXACT frontend origin
     credentials: true                // allow cookies
 }));
 
