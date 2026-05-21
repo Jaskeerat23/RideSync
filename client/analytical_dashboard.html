@@ -406,7 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('userName').textContent = username;
 
     // ── Basic Analysis ──
-    fetch('http://localhost:3000/dashboard/get_basic_analysis', {
+    fetch('https://ride-sync-psi.vercel.app/get_basic_analysis', {
         method: 'GET',
         credentials: 'include'
     })
