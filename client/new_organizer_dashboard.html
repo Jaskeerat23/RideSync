@@ -514,7 +514,6 @@
   </main>
 
   <script>
-    const token    = localStorage.getItem('token')    || '';
     const username = localStorage.getItem('username') || 'Rider';
     const pfp      = localStorage.getItem('pfp')      || '';
 
@@ -573,8 +572,7 @@
         const res = await fetch('https://ride-sync-backend-v1.onrender.com/rides/org_rides', {
           method: 'GET',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Content-Type': 'application/json'
           },
           credentials: 'include'
         });

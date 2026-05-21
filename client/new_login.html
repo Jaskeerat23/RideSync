@@ -222,7 +222,7 @@
       localStorage.setItem('pfp',      data.data.pfp || '');
       localStorage.setItem('email',    data.data.email || '');
       localStorage.setItem('role',     data.data.role);
-      localStorage.setItem('token',    data.data.jwt);
+      // localStorage.setItem('token',    data.data.jwt);
 
       if (data.data.role === 'organizer')    window.location.href = 'new_organizer_dashboard.html';
       else if (data.data.role === 'rider')   window.location.href = 'new_rider_dashboard.html';
