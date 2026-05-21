@@ -406,7 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('userName').textContent = username;
 
     // ── Basic Analysis ──
-    fetch('https://ride-sync-psi.vercel.app/get_basic_analysis', {
+    fetch('https://ride-sync-psi.vercel.app/dashboard/get_basic_analysis', {
         method: 'GET',
         credentials: 'include'
     })
@@ -421,7 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .catch(err => console.error('Error fetching analysis:', err));
 
     // ── Successful Rides ──
-    fetch('https://ride-sync-psi.vercel.app/get_successful_rides', {
+    fetch('https://ride-sync-psi.vercel.app/dashboard/get_successful_rides', {
         method: 'GET',
         credentials: 'include'
     })
