@@ -421,7 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .catch(err => console.error('Error fetching analysis:', err));
 
     // ── Successful Rides ──
-    fetch('http://localhost:3000/dashboard/get_successful_rides', {
+    fetch('https://ride-sync-psi.vercel.app/get_successful_rides', {
         method: 'GET',
         credentials: 'include'
     })
